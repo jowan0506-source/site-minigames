@@ -237,7 +237,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
         <div class="wall" id="wall"></div>
         <div class="overlay" id="crOver">
           <h2 id="crTitle">균열 보수</h2>
-          <p id="crMsg">45초 동안 벽에 쉴 새 없이 생기는 균열을 눌러 보수하세요.<br>멀쩡한 패널을 누르면 1개 감점이에요. <b>120개를 넘기면 무한 모드</b>: 시간 제한이 사라지고, 한 번이라도 틀리거나 놓치면 끝나요.</p>
+          <p id="crMsg">45초 동안 벽에 쉴 새 없이 생기는 균열을 눌러 보수하세요.<br>멀쩡한 패널을 누르면 1개 감점이에요. <b>120개를 넘기면 무한 모드</b>: 시간 제한이 사라지고, 틀리거나 놓치는 게 3번이 되면 끝나요.</p>
           <button class="btn" id="crStart" type="button">보수 시작</button>
         </div>
       </div>
@@ -655,8 +655,8 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     const elS = $('crScore'), elT = $('crTime'), elB = $('crBest'), bar = $('crBar'), over = $('crOver');
     elB.textContent = store.get('best_crack', 0);
     const cells = [];
-    const INF = 120;   // 이 점수부터 무한 모드: 시간 제한 없음, 한 번이라도 틀리거나 놓치면 끝
-    let run = false, score = 0, t0 = 0, nextAt = 0, raf = 0, leaks = 0, inf = false, infT = 0, why = '';
+    const INF = 120, LIVES = 3;   // 이 점수부터 무한 모드: 시간 제한 없음, 3번 틀리거나 놓치면 끝
+    let run = false, score = 0, t0 = 0, nextAt = 0, raf = 0, leaks = 0, inf = false, infT = 0, why = '', miss = 0;
     function crackPath() {
       let x = 15 + Math.random() * 70, y = 5, d = 'M' + x.toFixed(0) + ' ' + y;
       while (y < 95) { y += 10 + Math.random() * 12; x = Math.max(5, Math.min(95, x + (Math.random() - .5) * 34)); d += ' L' + x.toFixed(0) + ' ' + Math.min(95, y).toFixed(0); }
@@ -676,18 +676,20 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
       c.el.innerHTML = on ? '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="' + crackPath() + '"/></svg>' : '';
       c.el.setAttribute('aria-label', on ? '균열 패널' : '벽 패널');
     }
+    function infMiss(reason) { miss++; if (miss >= LIVES) why = reason + ' (3번째 실수)'; }
+    const lifeTxt = () => '무한 ' + '●'.repeat(LIVES - miss) + '○'.repeat(miss);
     function flash(c, cls) { c.el.className = 'cell ' + cls; c.mark = performance.now() + 250; }
     function hit(c) {
       if (!run) return;
       if (c.on) { show(c, false); flash(c, 'fixed'); score++; }
-      else if (inf) { flash(c, 'leak'); why = '멀쩡한 패널을 눌렀어요'; elS.textContent = score; return end(); }
+      else if (inf) { flash(c, 'leak'); infMiss('멀쩡한 패널을 눌렀어요'); if (why) return end(); }
       else { score = Math.max(0, score - 1); flash(c, 'leak'); }
       elS.textContent = score;
     }
     function loop(now) {
       const el = (now - t0) / 1000, left = Math.max(0, DUR - el);
       if (!inf && score >= INF) { inf = true; infT = now; bar.classList.add('inf'); }
-      if (inf) { elT.textContent = '무한'; bar.style.width = '100%'; }
+      if (inf) { elT.textContent = lifeTxt(); bar.style.width = ((LIVES - miss) / LIVES * 100) + '%'; }
       else { elT.textContent = left.toFixed(1); bar.style.width = (left / DUR * 100) + '%'; }
       // 무한 모드에서는 1분에 걸쳐 조금씩 더 빨라짐
       const k = inf ? 1 + Math.min(1, (now - infT) / 60000) * 0.6 : Math.min(1, el / DUR), life = Math.max(500, 1700 - 800 * k);
@@ -697,7 +699,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
         nextAt = now + Math.max(140, 520 - 300 * k) * (0.6 + Math.random() * 0.8);
       }
       cells.forEach(c => {
-        if (c.on && now > c.until) { show(c, false); flash(c, 'leak'); leaks++; if (inf) { why = '균열을 놓쳤어요'; } }
+        if (c.on && now > c.until) { show(c, false); flash(c, 'leak'); leaks++; if (inf) infMiss('균열을 놓쳤어요'); }
         else if (!c.on && c.mark && now > c.mark) { c.mark = 0; c.el.className = 'cell'; }
       });
       if (inf && why) return end();
@@ -706,7 +708,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     }
     function start() {
       cells.forEach(c => { show(c, false); c.mark = 0; });
-      score = 0; leaks = 0; inf = false; why = ''; bar.classList.remove('inf'); elS.textContent = 0; run = true; over.hidden = true;
+      score = 0; leaks = 0; inf = false; why = ''; miss = 0; bar.classList.remove('inf'); elS.textContent = 0; run = true; over.hidden = true;
       t0 = performance.now(); nextAt = t0 + 300; raf = requestAnimationFrame(loop);
     }
     function end() {
