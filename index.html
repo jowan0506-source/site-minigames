@@ -682,7 +682,15 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     const ICONS = [['🏗️', '타워크레인'], ['🚜', '굴착기'], ['🚧', '공사 안내판'], ['👷', '작업자'], ['🦺', '안전조끼'], ['🧱', '벽돌'], ['🔩', '볼트'], ['🚛', '덤프트럭']];
     const grid = $('memGrid'), elM = $('mmMoves'), elP = $('mmPairs'), elB = $('mmBest'), over = $('mmOver');
     const b0 = store.get('best_memory', null); elB.textContent = b0 === null ? '-' : b0;
-    let open = [], moves = 0, pairs = 0, lock = false;
+    let open = [], moves = 0, pairs = 0, lock = false, peekT = 0, peeked = false;
+    // 시작할 때 2초 동안 앞면 보여 주기
+    function peek() {
+      if (peeked) return; peeked = true;
+      const cards = grid.querySelectorAll('.card');
+      lock = true; cards.forEach(c => c.classList.add('up')); elP.textContent = '외우는 중';
+      clearTimeout(peekT);
+      peekT = setTimeout(() => { cards.forEach(c => c.classList.remove('up')); lock = false; update(); }, 2000);
+    }
     const update = () => { elM.textContent = moves; elP.textContent = pairs + '/8'; };
     function deal() {
       const arr = [...ICONS, ...ICONS].sort(() => Math.random() - .5);
@@ -693,6 +701,8 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
         const f = document.createElement('span'); f.className = 'face'; f.textContent = ic; f.setAttribute('aria-hidden', 'true');
         b.append(f); b.addEventListener('click', () => flip(b, nm)); return b;
       }));
+      peeked = false;
+      if (current === 'memory') peek();
     }
     function flip(b, nm) {
       if (lock || b.classList.contains('up')) return;
@@ -717,7 +727,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     }
     $('mmAgain').addEventListener('click', deal);
     deal();
-    return {};
+    return { enter() { if (moves === 0 && pairs === 0) peek(); } };
   })();
 
   // ───────── 캔버스 공통 ─────────
@@ -1574,6 +1584,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     if (current === name) return;
     if (current && mods[current].leave) mods[current].leave();
     current = name;
+    if (mods[name].enter) mods[name].enter();
     document.querySelectorAll('.game').forEach(s => { s.hidden = s.id !== 'g-' + name; });
     document.querySelectorAll('.tile').forEach(t => t.setAttribute('aria-current', t.dataset.game === name ? 'true' : 'false'));
     if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
