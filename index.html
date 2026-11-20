@@ -99,6 +99,14 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
 #rankList .fl { font-family: var(--mono); font-weight: 500; }
 #rankList li.me { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 #rankList li.empty { display: block; color: var(--muted); font-size: 13px; }
+#rankList .sub { font-size: 11px; color: var(--muted); margin-left: 6px; }
+.rank-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 2px solid var(--ink); border-radius: 4px; overflow: hidden; }
+.rank-tabs button { font: 600 13px var(--body); padding: 8px; border: 0; background: var(--panel); color: var(--ink); cursor: pointer; }
+.rank-tabs button[aria-pressed="true"] { background: var(--accent); color: #1d2733; }
+.rank-tabs button:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.rank-note { font-size: 12px; color: var(--muted); }
+.rank-note summary { cursor: pointer; }
+.rank-note p { margin: 6px 0 0; line-height: 1.6; }
 
 @media (max-width: 640px) {
   .app { grid-template-columns: minmax(0, 1fr); gap: 14px; }
@@ -262,7 +270,16 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
       <p class="hint">누를 때마다 드론이 떠올라요. 손을 놓으면 내려가요. 위아래 H빔 기둥 사이 틈으로 통과하세요. 통과할수록 틈이 좁아져요. <kbd>Space</kbd> · <kbd>↑</kbd> · 클릭 · 탭</p>
     </section>
     <section class="rank" aria-labelledby="rankTitle">
+      <div class="rank-tabs" role="group" aria-label="랭킹 종류">
+        <button type="button" id="tabGame" aria-pressed="true">이 게임 랭킹</button>
+        <button type="button" id="tabAll" aria-pressed="false">종합 순위</button>
+      </div>
       <div class="rank-head"><h2 id="rankTitle">랭킹 TOP 10</h2><span id="rankState">불러오는 중…</span></div>
+      <details class="rank-note" id="rankNote" hidden>
+        <summary>종합 점수 계산법</summary>
+        <p>게임마다 기준 기록을 100점으로 환산해 더해요(게임당 최대 100점, 10개 게임 합계 최대 1,000점). 기준보다 잘해도 100점에서 멈춰요.</p>
+        <p id="refList"></p>
+      </details>
       <form id="nickForm">
         <label for="nick">닉네임</label>
         <input id="nick" maxlength="12" placeholder="예: 3공구 김대리" autocomplete="off">
@@ -279,16 +296,17 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
   const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
                   set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
   const GAMES = {
-    slab:  { name: '슬래브 쌓기', field: 'best',  unit: 'F' },
-    crack: { name: '균열 보수',   field: 'crack', unit: '개' },
-    memory:{ name: '자재 짝맞추기', field: 'memory', unit: '회', asc: true },
-    pour:  { name: '타설 맞추기', field: 'pour', unit: '점' },
-    catch: { name: '자재 받기',   field: 'catch', unit: '개' },
-    level: { name: '수평 유지',   field: 'level', unit: '초' },
-    torque:{ name: '토크 조이기', field: 'torque', unit: '개' },
-    demo:  { name: '철거 작업',   field: 'demo', unit: '개' },
-    truck: { name: '덤프트럭 질주', field: 'truck', unit: 'm' },
-    drone: { name: '드론 점검',   field: 'drone', unit: '개' },
+    // ref = 종합 순위에서 100점이 되는 기록 (짝맞추기는 적을수록 좋음)
+    slab:  { name: '슬래브 쌓기', field: 'best',  unit: 'F',  ref: 30 },
+    crack: { name: '균열 보수',   field: 'crack', unit: '개', ref: 40 },
+    memory:{ name: '자재 짝맞추기', field: 'memory', unit: '회', asc: true, ref: 12 },
+    pour:  { name: '타설 맞추기', field: 'pour', unit: '점', ref: 450 },
+    catch: { name: '자재 받기',   field: 'catch', unit: '개', ref: 60 },
+    level: { name: '수평 유지',   field: 'level', unit: '초', ref: 60 },
+    torque:{ name: '토크 조이기', field: 'torque', unit: '개', ref: 25 },
+    demo:  { name: '철거 작업',   field: 'demo', unit: '개', ref: 80 },
+    truck: { name: '덤프트럭 질주', field: 'truck', unit: 'm', ref: 1000 },
+    drone: { name: '드론 점검',   field: 'drone', unit: '개', ref: 20 },
   };
   let current = null;
 
@@ -299,16 +317,29 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     inp.value = store.get('slabNick', '');
     const say = t => { elState.textContent = t; };
     const empty = t => { const li = document.createElement('li'); li.className = 'empty'; li.textContent = t; elList.replaceChildren(li); };
+    let mode = 'game';
+    // 종합 점수: 게임별 기준 기록 = 100점, 최대 100점
+    const pts = (k, v) => { const g = GAMES[k]; v = +v; if (!(v > 0)) return 0; return Math.min(100, Math.round((g.asc ? g.ref / v : v / g.ref) * 100)); };
+    const totalOf = d => { let t = 0, n = 0; for (const k in GAMES) { const p = pts(k, d[GAMES[k].field]); if (p > 0) { t += p; n++; } } return { t, n }; };
+    $('refList').textContent = Object.values(GAMES).map(g => g.name + ' ' + g.ref + g.unit + (g.asc ? '(이하)' : '')).join(' · ');
+    function setMode(m) {
+      mode = m; $('tabGame').setAttribute('aria-pressed', m === 'game'); $('tabAll').setAttribute('aria-pressed', m === 'all');
+      $('rankNote').hidden = m !== 'all'; render(); watch();
+    }
+    $('tabGame').addEventListener('click', () => setMode('game'));
+    $('tabAll').addEventListener('click', () => setMode('all'));
     function render() {
       const g = GAMES[current]; if (!g) return;
-      $('rankTitle').textContent = g.name + ' 랭킹 TOP 10';
+      $('tabGame').textContent = g.name + ' 랭킹';
+      $('rankTitle').textContent = mode === 'all' ? '종합 순위 TOP 20' : g.name + ' 랭킹 TOP 10';
       if (!ready) return;
       if (!rows.length) { empty('아직 기록이 없어요. 닉네임을 저장하고 첫 기록을 올려 보세요.'); return; }
       elList.replaceChildren(...rows.map((r, k) => {
         const li = document.createElement('li'); if (r.id === myId) li.className = 'me';
         const a = document.createElement('span'); a.className = 'no'; a.textContent = (k + 1) + '.';
         const b = document.createElement('span'); b.className = 'nm'; b.textContent = r.nick + (r.id === myId ? ' (나)' : '');
-        const c = document.createElement('span'); c.className = 'fl'; c.textContent = r.v + g.unit;
+        if (mode === 'all') { const s = document.createElement('span'); s.className = 'sub'; s.textContent = r.n + '개 게임'; b.append(s); }
+        const c = document.createElement('span'); c.className = 'fl'; c.textContent = mode === 'all' ? r.v.toLocaleString() + '점' : r.v + g.unit;
         li.append(a, b, c); return li;
       }));
     }
@@ -317,6 +348,17 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
       if (unsub) { unsub(); unsub = null; }
       const g = GAMES[current], timer = setTimeout(() => say('랭킹 서버 응답이 없어요.'), 10000);
       rows = []; ready = false; empty('랭킹을 불러오는 중이에요.');
+      if (mode === 'all') {
+        unsub = db.collection('scores').limit(1000).onSnapshot(q => {
+          clearTimeout(timer); ready = true;
+          rows = q.docs.map(x => { const d = x.data() || {}, s = totalOf(d); return { id: x.id, nick: String(d.nick || '익명'), v: s.t, n: s.n }; })
+                       .filter(r => r.v > 0).sort((a, b) => b.v - a.v).slice(0, 20);
+          const me = totalOf(mine);
+          say(inp.value.trim() ? '내 종합 ' + me.t + '점 / 1,000' : '닉네임을 저장하면 기록이 올라가요');
+          render();
+        }, () => { clearTimeout(timer); say('랭킹을 불러오지 못했어요.'); });
+        return;
+      }
       unsub = db.collection('scores').orderBy(g.field, g.asc ? 'asc' : 'desc').limit(10).onSnapshot(q => {
         clearTimeout(timer); ready = true;
         rows = q.docs.map(x => { const d = x.data() || {}; return { id: x.id, nick: String(d.nick || '익명'), v: +d[g.field] || 0 }; })
