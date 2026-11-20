@@ -347,7 +347,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       </button>
       <button class="tile" data-game="split" type="button">
         <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="13" y="2" width="8" height="8" fill="currentColor"/><rect x="13" y="12" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 24l-6 4M23 24l6 4" stroke="currentColor" stroke-width="2.5"/><rect x="1" y="27" width="10" height="6" fill="currentColor"/><rect x="23" y="27" width="10" height="6" fill="currentColor"/></svg>
-        <b>현장 정리</b><small>보호구는 왼쪽, 자재는 오른쪽</small>
+        <b>현장 정리</b><small>매 판 바뀌는 물건 좌우 분류</small>
       </button>      <button class="tile tile-hall" data-game="hall" type="button">
         <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M10 4h14v8a7 7 0 0 1-14 0z" fill="currentColor"/><path d="M10 7H5a5 5 0 0 0 5 6M24 7h5a5 5 0 0 1-5 6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M17 19v6M11 30h12M13 26h8" stroke="currentColor" stroke-width="2.5"/></svg>
         <b>명예의 전당</b><small>주간 1위 박제 · 별 순위</small>
@@ -474,7 +474,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       <div class="game-head"><h1>현장 정리</h1>
         <div class="stats"><div class="stat"><small>정리</small><b id="spScore">0</b></div><div class="stat"><small>최고</small><b id="spBest">-</b></div></div></div>
       <div class="stage"><canvas id="cvSplit" tabindex="0" aria-label="현장 정리 화면. 맨 아래 물건을 왼쪽 또는 오른쪽으로 보냅니다"></canvas></div>
-      <p class="hint">슈트 맨 아래(노란 원) 물건을 분류하세요. <b>보호구는 왼쪽</b>, <b>자재는 오른쪽</b>. 처음엔 안전모·벽돌 두 가지, <b>30개부터 안전조끼·볼트가 추가</b>돼요. 시간 막대가 계속 줄고 맞히면 다시 차요. 3번 틀리거나 시간이 바닥나면 끝! 화면 왼쪽·오른쪽 탭 또는 <kbd>←</kbd> <kbd>→</kbd></p>
+      <p class="hint">슈트 맨 아래(노란 원) 물건을 분류하세요. <b>보호구(안전모·조끼·보안경·장갑·안전화·마스크)는 왼쪽</b>, <b>자재·공구(벽돌·볼트·렌치·망치·체인·삼각자)는 오른쪽</b>. 매 판 이 중에서 무작위로 한 종류씩 나오고, <b>30개부터 한 종류씩 더</b> 추가돼요. 시간 막대가 계속 줄고 맞히면 다시 차요. 3번 틀리거나 시간이 바닥나면 끝! 화면 왼쪽·오른쪽 탭 또는 <kbd>←</kbd> <kbd>→</kbd></p>
     </section>
     <section class="game hall-page" id="g-hall" hidden>
       <div class="game-head"><h1>🏆 명예의 전당</h1></div>
@@ -1754,18 +1754,20 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
   const split = (() => {
     const { cv, ctx } = mkCanvas('cvSplit'), elS = $('spScore'), elB = $('spBest');
     elB.textContent = bestText('split');
-    const LEFT = [['⛑️', '안전모'], ['🦺', '안전조끼']];
-    const RIGHT = [['🧱', '벽돌'], ['🔩', '볼트']];
+    // 후보를 넉넉히 두고 매 판 무작위로 뽑음 (익숙해지지 않게)
+    const POOL_L = [['⛑️', '안전모'], ['🦺', '안전조끼'], ['🥽', '보안경'], ['🧤', '장갑'], ['🥾', '안전화'], ['😷', '마스크']];
+    const POOL_R = [['🧱', '벽돌'], ['🔩', '볼트'], ['🔧', '렌치'], ['🔨', '망치'], ['⛓️', '체인'], ['📐', '삼각자']];
+    const pick2 = a => { const c = a.slice().sort(() => Math.random() - .5); return [c[0], c[1]]; };
     const MORE = 30;   // 이 점수부터 종류 추가 (2종 → 4종)
     const BOT = 292, GAP = 40, SHOW = 6, EMO = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
     let st;
     const kinds = () => st.score < MORE ? 1 : 2;   // 처음엔 안전모·벽돌 2종, 30개부터 안전조끼·볼트까지 4종
     function item() {
-      const left = Math.random() < .5, pool = (left ? LEFT : RIGHT).slice(0, kinds());
+      const left = Math.random() < .5, pool = (left ? st.L : st.R).slice(0, kinds());
       const p = pool[Math.floor(Math.random() * pool.length)]; return { ic: p[0], nm: p[1], left };
     }
     function reset() {
-      st = { stack: [], score: 0, combo: 0, lives: 3, time: 1, run: false, over: false, fly: [], shake: 0, msg: '', msgT: 0, drop: 0 };
+      st = { stack: [], score: 0, combo: 0, lives: 3, time: 1, run: false, over: false, fly: [], shake: 0, msg: '', msgT: 0, drop: 0, L: pick2(POOL_L), R: pick2(POOL_R) };
       for (let i = 0; i < SHOW + 1; i++) st.stack.push(item());
       elS.textContent = '0';
     }
@@ -1779,7 +1781,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       if (ok) {
         st.score++; st.combo++; elS.textContent = st.score;
         st.time = Math.min(1, st.time + 0.055 + Math.min(0.045, st.combo * 0.0025));
-        if (st.score === MORE) { st.msg = '새 자재 등장! 조끼◀ ▶볼트'; st.msgT = 90; }
+        if (st.score === MORE) { st.msg = '추가! ' + st.L[1][1] + '◀  ▶' + st.R[1][1]; st.msgT = 90; }
         else if (st.combo % 10 === 0) { st.msg = st.combo + ' 콤보!'; st.msgT = 50; }
       } else {
         st.lives--; st.combo = 0; st.shake = 14; st.msg = it.nm + '은(는) ' + (it.left ? '왼쪽' : '오른쪽') + '!'; st.msgT = 55;
@@ -1837,11 +1839,11 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       });
       ctx.textBaseline = 'alphabetic';
       const hot = st.fly.length ? st.fly[st.fly.length - 1] : null;
-      bin(52, '◀ 보호구함', LEFT.slice(0, st.run || st.over ? kinds() : 1).map(p => p[0]).join(''), hot && hot.ok && hot.tx < CW / 2 && hot.t < .9);
-      bin(CW - 52, '자재 적치장 ▶', RIGHT.slice(0, st.run || st.over ? kinds() : 1).map(p => p[0]).join(''), hot && hot.ok && hot.tx > CW / 2 && hot.t < .9);
+      bin(52, '◀ 보호구함', st.L.slice(0, kinds()).map(p => p[0]).join(''), hot && hot.ok && hot.tx < CW / 2 && hot.t < .9);
+      bin(CW - 52, '자재·공구 ▶', st.R.slice(0, kinds()).map(p => p[0]).join(''), hot && hot.ok && hot.tx > CW / 2 && hot.t < .9);
       ctx.restore();
-      if (st.msgT) say2(ctx, st.msg, 76, '20px "Black Han Sans", sans-serif', (st.msg.includes('콤보') || st.msg.includes('새 자재')) ? col.acc : col.bad);
-      if (!st.run && !st.over) { panel(ctx, '현장 정리', '보호구는 ◀ 왼쪽, 자재는 오른쪽 ▶', '화면 왼쪽·오른쪽을 눌러 시작'); }
+      if (st.msgT) say2(ctx, st.msg, 76, '20px "Black Han Sans", sans-serif', (st.msg.includes('콤보') || st.msg.includes('추가!')) ? col.acc : col.bad);
+      if (!st.run && !st.over) { panel(ctx, '현장 정리', '이번 판: ' + st.L[0][1] + ' ◀   ▶ ' + st.R[0][1], '보호구는 왼쪽, 자재·공구는 오른쪽 · 눌러서 시작'); }
       if (st.over) panel(ctx, st.lives <= 0 ? '실수 3번!' : '시간 초과!', st.score + '개 정리', '최고 ' + bestText('split', '개') + ' · 다시 하려면 누르세요', col.bad);
     }
     cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.focus(); send(pxOf(cv, e) < CW / 2); });
