@@ -1044,7 +1044,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     }
     function serve() { st.stuck = true; st.bx = st.px + st.pw / 2; st.by = PY - R - 1; st.vx = 0; st.vy = 0; }
     function reset() {
-      st = { px: 115, pw: 70, bricks: building(1), lives: 3, score: 0, stage: 1, run: false, over: false, L: false, R: false, sp: 4.2, shake: 0, msg: 0 };
+      st = { px: 115, pw: 70, bricks: building(1), lives: 3, score: 0, stage: 1, run: false, over: false, L: false, R: false, sp: 5.8, shake: 0, msg: 0 };
       serve(); elS.textContent = '0';
     }
     function launch() {
@@ -1061,8 +1061,8 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
       if (st.stuck) { st.bx = st.px + st.pw / 2; st.by = PY - R - 1; }
       else {
         // 두 번에 나눠 이동 (빠를 때 벽돌 통과 방지)
-        for (let k = 0; k < 2; k++) {
-          st.bx += st.vx / 2; st.by += st.vy / 2;
+        for (let k = 0; k < 3; k++) {
+          st.bx += st.vx / 3; st.by += st.vy / 3;
           if (st.bx < R) { st.bx = R; st.vx = Math.abs(st.vx); }
           if (st.bx > CW - R) { st.bx = CW - R; st.vx = -Math.abs(st.vx); }
           if (st.by < 30 + R) { st.by = 30 + R; st.vy = Math.abs(st.vy); }
@@ -1087,7 +1087,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
           else serve();
         }
         if (!st.bricks.some(b => b.hp > 0)) {
-          st.stage++; st.sp = Math.min(7, st.sp + 0.5); st.bricks = building(st.stage); st.msg = 90; serve();
+          st.stage++; st.sp = Math.min(9.5, st.sp + 0.7); st.bricks = building(st.stage); st.msg = 90; serve();
         }
       }
       if (st.shake) st.shake--;
