@@ -757,6 +757,15 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     cv.width = CW * r; cv.height = CH * r; ctx.setTransform(r, 0, 0, r, 0, 0); return { cv, ctx };
   }
   const pxOf = (cv, e) => { const b = cv.getBoundingClientRect(); return (e.clientX - b.left) / b.width * CW; };
+  // 손가락·마우스 x 위치 추적 (아이폰에서 터치가 중간에 끊겨도 마지막 위치까지 따라감)
+  function follow(cv, onDown) {
+    const t = { x: null };
+    const setX = cx => { const b = cv.getBoundingClientRect(); t.x = (cx - b.left) / b.width * CW; };
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.focus(); try { cv.setPointerCapture(e.pointerId); } catch (er) {} setX(e.clientX); onDown(); });
+    cv.addEventListener('pointermove', e => setX(e.clientX));
+    cv.addEventListener('touchmove', e => { e.preventDefault(); if (e.touches[0]) setX(e.touches[0].clientX); }, { passive: false });
+    return t;
+  }
   function paper(ctx) {
     ctx.fillStyle = col.bg; ctx.fillRect(0, 0, CW, CH); ctx.strokeStyle = col.grid; ctx.lineWidth = 1;
     for (let x = 0; x <= CW; x += 20) { ctx.beginPath(); ctx.moveTo(x + .5, 0); ctx.lineTo(x + .5, CH); ctx.stroke(); }
@@ -855,6 +864,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
           st.next = Math.round((48 - 26 * d) * (0.6 + Math.random() * 0.8));
         }
         st.x += ((st.R ? 1 : 0) - (st.L ? 1 : 0)) * 5;
+        if (st.L || st.R) tgt.x = null; else if (tgt.x !== null) st.x += Math.max(-12, Math.min(12, tgt.x - st.w / 2 - st.x));   // 손가락 위치로 따라가기
         st.x = Math.max(0, Math.min(CW - st.w, st.x));
         st.items.forEach(it => { it.y += it.vy; });
         st.items = st.items.filter(it => {
@@ -888,8 +898,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
       if (!st.run && !st.over) { say2(ctx, '눌러서 시작', 250, '24px "Black Han Sans", sans-serif'); say2(ctx, '안전모는 받고, 벽돌은 피하세요', 272, '12px "IBM Plex Sans KR", sans-serif', col.muted); }
       if (st.over) panel(ctx, '작업 종료', '안전모 ' + st.score + '개 받음', '최고 ' + bestText('catch', '개') + ' · 다시 하려면 누르세요');
     }
-    cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.focus(); start(); st.x = Math.max(0, Math.min(CW - st.w, pxOf(cv, e) - st.w / 2)); });
-    cv.addEventListener('pointermove', e => { if (st.run) st.x = pxOf(cv, e) - st.w / 2; });
+    const tgt = follow(cv, () => start());
     reset(true); requestAnimationFrame(frame);
     return {
       key(e) {
@@ -1047,6 +1056,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
       requestAnimationFrame(frame);
       if (current !== 'demo') return;
       st.px += ((st.R ? 1 : 0) - (st.L ? 1 : 0)) * 6;
+      if (st.L || st.R) tgt.x = null; else if (tgt.x !== null) st.px += Math.max(-14, Math.min(14, tgt.x - st.pw / 2 - st.px));   // 손가락 위치로 따라가기
       st.px = Math.max(0, Math.min(CW - st.pw, st.px));
       if (st.stuck) { st.bx = st.px + st.pw / 2; st.by = PY - R - 1; }
       else {
@@ -1108,8 +1118,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
       else if (st.stuck && !st.over) say2(ctx, '눌러서 발사', 280, '600 14px "IBM Plex Sans KR", sans-serif', col.muted);
       if (st.over) panel(ctx, '작업 종료', '벽돌 ' + st.score + '개 철거 · ' + st.stage + '동', '최고 ' + bestText('demo', '개') + ' · 다시 하려면 누르세요');
     }
-    cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.focus(); if (!st.over) st.px = Math.max(0, Math.min(CW - st.pw, pxOf(cv, e) - st.pw / 2)); launch(); });
-    cv.addEventListener('pointermove', e => { if (st.run) st.px = Math.max(0, Math.min(CW - st.pw, pxOf(cv, e) - st.pw / 2)); });
+    const tgt = follow(cv, () => launch());
     reset(); requestAnimationFrame(frame);
     return {
       key(e) {
