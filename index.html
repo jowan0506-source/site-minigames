@@ -284,6 +284,13 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
 .hall-h::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: var(--hazard); }
 .tile-hall { background: linear-gradient(180deg, #4a3b10, #241c06) !important; border-color: #e0a800 !important; color: #ffd84a !important; }
 .tile-hall[aria-current="true"] { background: linear-gradient(90deg, transparent 0 9px, var(--accent) 9px), var(--hazard) !important; color: var(--black) !important; }
+#rankList li.silver { position: relative; background: linear-gradient(90deg, rgba(200,210,222,.16), transparent 75%); box-shadow: 0 0 12px rgba(200,210,222,.18); }
+#rankList li.silver::before { content: ""; position: absolute; inset: 0; padding: 2px; pointer-events: none; border-radius: 2px;
+  background: linear-gradient(110deg, #6d7782 0%, #c3ccd6 25%, #ffffff 40%, #c3ccd6 55%, #6d7782 75%, #c3ccd6 100%); background-size: 300% 100%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: goldShine 4s linear infinite; }
+@media (prefers-reduced-motion: reduce) { #rankList li.silver::before { animation: none; } }
+#rankList .prev.prev-s { color: #1b232c; background: linear-gradient(180deg, #ffffff, #b9c2cc); }
 </style>
 
 </head>
@@ -586,12 +593,12 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     const weekCache = {};
     async function weekResult(wk) {
       if (weekCache[wk]) return weekCache[wk];
-      const key = 'wres4_' + wk;
+      const key = 'wres5_' + wk;
       try { const c = JSON.parse(store.get(key, 'null')); if (c) return (weekCache[wk] = c); } catch (e) {}
       const q = await db.collection(weekPath(wk)).limit(2000).get();
       const raw = q.docs.map(x => ({ id: x.id, nick: String((x.data() || {}).nick || '익명'), data: x.data() || {} })), tt = totals(raw);
       const list = raw.map(d => ({ id: d.id, nick: d.nick, t: tt[d.id].t })).filter(r => r.t > 0).sort((a, b) => b.t - a.t);
-      const res = { top: list.slice(0, 5), n: list.length };
+      const res = { top: list.slice(0, 10), n: list.length };   // TOP 10 (1~5 금테+별, 6~10 은테)
       store.set(key, JSON.stringify(res)); return (weekCache[wk] = res);
     }
     let prevTop = {};   // 전주 종합 1~5등: { uid: 등수 }
@@ -605,7 +612,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
         try {
           const r = await weekResult(wk);
           h.push({ wk, champ: r.top[0], n: r.n });
-          r.top.forEach((p, i) => { st[p.id] = (st[p.id] || 0) + 1; if (!sn[p.id]) sn[p.id] = p.nick; if (wk === wkNow - 1) pt[p.id] = i + 1; });
+          r.top.forEach((p, i) => { if (i < 5) { st[p.id] = (st[p.id] || 0) + 1; if (!sn[p.id]) sn[p.id] = p.nick; } if (wk === wkNow - 1) pt[p.id] = i + 1; });
         } catch (e) {}
       }
       prevTop = pt; stars = st; starNick = sn; hall = h; render(); renderHall();
@@ -632,7 +639,8 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     function rowEl(r, g) {
       const li = document.createElement('li'); const cls = [];
       if (r.id === myId) cls.push('me');
-      if (prevTop[r.id]) cls.push('legend'); if (prevTop[r.id] === 1) cls.push('legend-1');
+      const pr = prevTop[r.id];
+      if (pr && pr <= 5) cls.push('legend'); if (pr === 1) cls.push('legend-1'); if (pr > 5) cls.push('silver');
       li.className = cls.join(' ');
       const a = document.createElement('span'), rk = r.rk;
       const tier = rk <= 3 ? 'm' + rk : rk <= 10 ? 'm-top' : rk <= 20 ? 'm-good' : 'm-rest';
@@ -640,7 +648,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       a.title = rk === 1 ? '금메달' : rk === 2 ? '은메달' : rk === 3 ? '동메달' : rk <= 10 ? '우수' : rk <= 20 ? '장려' : rk + '위';
       a.setAttribute('aria-label', rk + '등 ' + a.title);
       const b = document.createElement('span'); b.className = 'nm'; b.textContent = (prevTop[r.id] === 1 ? '👑 ' : '') + r.nick + (r.id === myId ? ' (나)' : '');
-      if (prevTop[r.id]) { const p = document.createElement('span'); p.className = 'prev'; p.textContent = '전주 ' + prevTop[r.id] + '위'; b.append(p); }
+      if (prevTop[r.id]) { const p = document.createElement('span'); p.className = 'prev' + (prevTop[r.id] > 5 ? ' prev-s' : ''); p.textContent = '전주 ' + prevTop[r.id] + '위'; b.append(p); }
       if (mode === 'all') { const s = document.createElement('span'); s.className = 'sub'; s.textContent = r.n > TOPN ? r.n + '개 중 ' + TOPN + '개 반영' : r.n + '개 게임'; b.append(s); }
       const c = document.createElement('span'); c.className = 'fl'; c.textContent = mode === 'all' ? r.v.toLocaleString() + '점' : r.v + g.unit;
       li.append(a, b, starEl(r.id), c); return li;
@@ -699,7 +707,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
         els.push(gap, rowEl(meRow, g));
       }
       const foot = document.createElement('li'); foot.className = 'empty foot';
-      foot.textContent = '참가자 ' + list.length + '명' + (meRow ? ' · 내 순위 ' + meRow.rk + '위' : '') + (Object.keys(prevTop).length ? ' · 금테두리 = 전주 종합 TOP 5' : '') + (Object.keys(stars).length ? ' · ★ = 역대 TOP 5 횟수 (5개면 큰 별)' : '');
+      foot.textContent = '참가자 ' + list.length + '명' + (meRow ? ' · 내 순위 ' + meRow.rk + '위' : '') + (Object.keys(prevTop).length ? ' · 금테 = 전주 종합 1~5위 · 은테 = 6~10위' : '') + (Object.keys(stars).length ? ' · ★ = 역대 TOP 5 횟수 (5개면 큰 별)' : '');
       els.push(foot);
       elList.replaceChildren(...els);
     }
