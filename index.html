@@ -112,6 +112,9 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
   background: linear-gradient(90deg, #c8412b 0 50%, #2f6fb5 50%); clip-path: polygon(0 0, 100% 0, 75% 100%, 25% 100%); }
 .medal.m-top { border: 2px solid var(--accent); color: var(--ink); background: color-mix(in srgb, var(--accent) 15%, transparent); }
 .medal.m-good { border: 1.5px solid var(--muted); color: var(--muted); }
+.medal.m-rest { color: var(--muted); font-size: 11px; }
+#rankList li.gap { text-align: center; padding: 2px; border: 0; }
+#rankList li.foot { text-align: right; font-size: 12px; border: 0; padding-top: 8px; }
 #rankList li:has(.m1) .fl, #rankList li:has(.m1) .nm { font-weight: 600; }
 #rankList .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #rankList .fl { font-family: var(--mono); font-weight: 500; }
@@ -404,52 +407,65 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     $('refList').textContent = Object.values(GAMES).map(g => g.name + ' ' + g.ref + g.unit + (g.asc ? '(이하)' : '')).join(' · ');
     function setMode(m) {
       mode = m; $('tabGame').setAttribute('aria-pressed', m === 'game'); $('tabAll').setAttribute('aria-pressed', m === 'all');
-      $('rankNote').hidden = m !== 'all'; render(); watch();
+      $('rankNote').hidden = m !== 'all'; render();
     }
     $('tabGame').addEventListener('click', () => setMode('game'));
     $('tabAll').addEventListener('click', () => setMode('all'));
+    // 전체 기록을 한 번 구독해 두고, 게임·탭을 바꿀 때는 다시 읽지 않고 화면만 새로 그림
+    let docs = [];
+    function rowsFor() {
+      const g = GAMES[current];
+      let list;
+      if (mode === 'all') {
+        list = docs.map(d => { const s = totalOf(d.data); return { id: d.id, nick: d.nick, v: s.t, n: s.n }; }).filter(r => r.v > 0)
+                   .sort((a, b) => b.v - a.v);
+      } else {
+        list = docs.map(d => ({ id: d.id, nick: d.nick, v: +d.data[g.field] || 0 })).filter(r => r.v > 0)
+                   .sort((a, b) => g.asc ? a.v - b.v : b.v - a.v);
+      }
+      let rk = 0;   // 같은 점수는 같은 등수
+      list.forEach((r, k) => { if (k === 0 || r.v !== list[k - 1].v) rk = k + 1; r.rk = rk; });
+      return list;
+    }
+    function rowEl(r, g) {
+      const li = document.createElement('li'); if (r.id === myId) li.className = 'me';
+      const a = document.createElement('span'), rk = r.rk;
+      const tier = rk <= 3 ? 'm' + rk : rk <= 10 ? 'm-top' : rk <= 20 ? 'm-good' : 'm-rest';
+      a.className = 'medal ' + tier; a.textContent = rk;
+      a.title = rk === 1 ? '금메달' : rk === 2 ? '은메달' : rk === 3 ? '동메달' : rk <= 10 ? '우수' : rk <= 20 ? '장려' : rk + '위';
+      a.setAttribute('aria-label', rk + '등 ' + a.title);
+      const b = document.createElement('span'); b.className = 'nm'; b.textContent = r.nick + (r.id === myId ? ' (나)' : '');
+      if (mode === 'all') { const s = document.createElement('span'); s.className = 'sub'; s.textContent = r.n + '개 게임'; b.append(s); }
+      const c = document.createElement('span'); c.className = 'fl'; c.textContent = mode === 'all' ? r.v.toLocaleString() + '점' : r.v + g.unit;
+      li.append(a, b, c); return li;
+    }
     function render() {
       const g = GAMES[current]; if (!g) return;
       $('tabGame').textContent = g.name + ' 랭킹';
       $('rankTitle').textContent = mode === 'all' ? '종합 순위 TOP 20' : g.name + ' 랭킹 TOP 20';
       if (!ready) return;
-      if (!rows.length) { empty('아직 기록이 없어요. 닉네임을 저장하고 첫 기록을 올려 보세요.'); return; }
-      let rk = 0;
-      elList.replaceChildren(...rows.map((r, k) => {
-        if (k === 0 || r.v !== rows[k - 1].v) rk = k + 1;   // 같은 점수는 같은 등수
-        const li = document.createElement('li'); if (r.id === myId) li.className = 'me';
-        const a = document.createElement('span');
-        const tier = rk <= 3 ? 'm' + rk : rk <= 10 ? 'm-top' : 'm-good';
-        a.className = 'medal ' + tier; a.textContent = rk;
-        a.title = rk === 1 ? '금메달' : rk === 2 ? '은메달' : rk === 3 ? '동메달' : rk <= 10 ? '우수' : '장려';
-        a.setAttribute('aria-label', rk + '등 ' + a.title);
-        const b = document.createElement('span'); b.className = 'nm'; b.textContent = r.nick + (r.id === myId ? ' (나)' : '');
-        if (mode === 'all') { const s = document.createElement('span'); s.className = 'sub'; s.textContent = r.n + '개 게임'; b.append(s); }
-        const c = document.createElement('span'); c.className = 'fl'; c.textContent = mode === 'all' ? r.v.toLocaleString() + '점' : r.v + g.unit;
-        li.append(a, b, c); return li;
-      }));
+      const list = rowsFor();
+      const meRow = list.find(r => r.id === myId);
+      if (mode === 'all') say(inp.value.trim() ? '내 종합 ' + totalOf(mine).t + '점 / 1,500' : '닉네임을 저장하면 기록이 올라가요');
+      else say(inp.value.trim() ? '내 최고 ' + (mine[g.field] ? mine[g.field] + g.unit : '없음') : '닉네임을 저장하면 기록이 올라가요');
+      if (!list.length) { empty('아직 기록이 없어요. 닉네임을 저장하고 첫 기록을 올려 보세요.'); return; }
+      const els = list.slice(0, 20).map(r => rowEl(r, g));
+      if (meRow && meRow.rk > 20) {   // 20등 밖이면 맨 아래에 내 순위 따로
+        const gap = document.createElement('li'); gap.className = 'empty gap'; gap.textContent = '⋯ ' + list.length + '명 중';
+        els.push(gap, rowEl(meRow, g));
+      }
+      const foot = document.createElement('li'); foot.className = 'empty foot';
+      foot.textContent = '참가자 ' + list.length + '명' + (meRow ? ' · 내 순위 ' + meRow.rk + '위' : '');
+      els.push(foot);
+      elList.replaceChildren(...els);
     }
     function watch() {
-      if (!db || !current) return;
-      if (unsub) { unsub(); unsub = null; }
-      const g = GAMES[current], timer = setTimeout(() => say('랭킹 서버 응답이 없어요.'), 10000);
-      rows = []; ready = false; empty('랭킹을 불러오는 중이에요.');
-      if (mode === 'all') {
-        unsub = db.collection('scores').limit(1000).onSnapshot(q => {
-          clearTimeout(timer); ready = true;
-          rows = q.docs.map(x => { const d = x.data() || {}, s = totalOf(d); return { id: x.id, nick: String(d.nick || '익명'), v: s.t, n: s.n }; })
-                       .filter(r => r.v > 0).sort((a, b) => b.v - a.v).slice(0, 20);
-          const me = totalOf(mine);
-          say(inp.value.trim() ? '내 종합 ' + me.t + '점 / 1,500' : '닉네임을 저장하면 기록이 올라가요');
-          render();
-        }, () => { clearTimeout(timer); say('랭킹을 불러오지 못했어요.'); });
-        return;
-      }
-      unsub = db.collection('scores').orderBy(g.field, g.asc ? 'asc' : 'desc').limit(20).onSnapshot(q => {
+      if (!db || unsub) { render(); return; }
+      const timer = setTimeout(() => say('랭킹 서버 응답이 없어요.'), 10000);
+      ready = false; empty('랭킹을 불러오는 중이에요.');
+      unsub = db.collection('scores').limit(2000).onSnapshot(q => {
         clearTimeout(timer); ready = true;
-        rows = q.docs.map(x => { const d = x.data() || {}; return { id: x.id, nick: String(d.nick || '익명'), v: +d[g.field] || 0 }; })
-                     .filter(r => r.v > 0);
-        say(inp.value.trim() ? '내 최고 ' + (mine[g.field] ? mine[g.field] + g.unit : '없음') : '닉네임을 저장하면 기록이 올라가요');
+        docs = q.docs.map(x => { const d = x.data() || {}; return { id: x.id, nick: String(d.nick || '익명'), data: d }; });
         render();
       }, () => { clearTimeout(timer); say('랭킹을 불러오지 못했어요.'); });
     }
