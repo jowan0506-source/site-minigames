@@ -459,7 +459,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       <div class="game-head"><h1>현장 횡단</h1>
         <div class="stats"><div class="stat"><small>횡단 성공</small><b id="crsScore">0</b></div><div class="stat"><small>최고</small><b id="crsBest">-</b></div></div></div>
       <div class="stage"><canvas id="cvCross" tabindex="0" aria-label="현장 횡단 화면. 누를 때마다 한 칸 앞으로 갑니다"></canvas></div>
-      <p class="hint">누를 때마다 작업자가 한 칸 앞으로 가요. 트럭과 지게차 사이 틈을 노려 건너편 작업 구역까지 가세요. 건널 때마다 차가 빨라져요. <kbd>Space</kbd> · <kbd>↑</kbd> · 클릭 · 탭</p>
+      <p class="hint">화면을 누를 때마다 작업자가 한 칸 앞으로 가요. <b>화면 맨 아래(대기 구역)를 누르면 한 칸 뒤로</b> 물러나요. 트럭과 지게차 사이 틈을 노려 건너편 작업 구역까지 가세요. 건널 때마다 차가 조금씩 빨라져요. 앞으로 <kbd>Space</kbd> <kbd>↑</kbd> · 뒤로 <kbd>↓</kbd></p>
     </section>
 
     <section class="game" id="g-react" hidden>
@@ -1640,11 +1640,12 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     function makeLanes() {
       st.lanes = [];
       for (let i = 1; i <= LANES; i++) {
-        const dir = i % 2 ? 1 : -1, sp = (0.9 + Math.random() * 1.1 + st.level * 0.25) * dir;
-        const n = 2 + (Math.random() < .5 ? 1 : 0), cars = [];
-        const span = CW + 120;
-        for (let k = 0; k < n; k++) { const w = 40 + Math.random() * 36; cars.push({ x: k * span / n + Math.random() * 30 - 60, w, fork: Math.random() < .35 }); }
-        st.lanes.push({ sp, cars });
+        // 차는 한 차선에 1~2대, 일정한 간격 유지(span 주기로 순환) → 항상 지나갈 틈이 있음
+        const lv = Math.min(st.level, 8), dir = i % 2 ? 1 : -1, sp = (0.55 + Math.random() * 0.6 + lv * 0.12) * dir;
+        const n = Math.random() < .35 ? 1 : 2, cars = [], span = CW + 160;
+        const off = Math.random() * span;
+        for (let k = 0; k < n; k++) { const w = 34 + Math.random() * 22; cars.push({ x: (off + k * span / n) % span - 80, w, fork: Math.random() < .35 }); }
+        st.lanes.push({ sp, cars, span });
       }
     }
     function reset() { st = { row: 0, score: 0, level: 0, run: false, over: false, hop: 0, flash: 0 }; makeLanes(); elS.textContent = '0'; }
@@ -1654,13 +1655,14 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       st.row++; st.hop = 6;
       if (st.row > LANES) { st.score++; elS.textContent = st.score; st.level++; st.row = 0; st.flash = 40; makeLanes(); }
     }
+    function back() { if (st.run && !st.over && st.row > 0) { st.row--; st.hop = 6; } }
     function frame() {
       requestAnimationFrame(frame);
       if (current !== 'cross') return;
       st.lanes.forEach(l => l.cars.forEach(c => {
         c.x += l.sp * (st.run || !st.over ? 1 : 0);
-        if (l.sp > 0 && c.x > CW + 20) c.x = -c.w - 20 - Math.random() * 40;
-        if (l.sp < 0 && c.x + c.w < -20) c.x = CW + 20 + Math.random() * 40;
+        if (l.sp > 0 && c.x > CW + 80) c.x -= l.span;
+        if (l.sp < 0 && c.x + c.w < -80) c.x += l.span;
       }));
       if (st.hop) st.hop--; if (st.flash) st.flash--;
       if (st.run && st.row >= 1 && st.row <= LANES) {
@@ -1672,6 +1674,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       ctx.fillStyle = col.good; ctx.globalAlpha = .25; ctx.fillRect(0, rowY(0) - 20, CW, 40); ctx.fillRect(0, rowY(LANES + 1) - 20, CW, 40); ctx.globalAlpha = 1;
       ctx.fillStyle = col.ink; ctx.font = '600 11px "IBM Plex Sans KR", sans-serif'; ctx.textAlign = 'left';
       ctx.fillText('대기 구역', 8, rowY(0) + 4); ctx.fillText('작업 구역 (도착)', 8, rowY(LANES + 1) + 4);
+      ctx.textAlign = 'right'; ctx.fillStyle = col.muted; ctx.fillText(st.run ? '여기 탭 = ▼ 뒤로' : '', CW - 8, rowY(0) + 4); ctx.textAlign = 'left';
       for (let i = 1; i <= LANES; i++) {
         const y = rowY(i); ctx.fillStyle = col.muted; ctx.fillRect(0, y - 20, CW, 40);
         ctx.strokeStyle = col.bg; ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.moveTo(0, y + 20); ctx.lineTo(CW, y + 20); ctx.stroke(); ctx.setLineDash([]);
@@ -1688,14 +1691,22 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       ctx.fillStyle = col.ink; ctx.fillRect(WX - 6, y - 4, 12, 14);
       ctx.fillStyle = col.acc; ctx.beginPath(); ctx.arc(WX, y - 5, 7, Math.PI, 0); ctx.fill(); ctx.fillRect(WX - 9, y - 6, 18, 2);
       ctx.fillStyle = col.bad; ctx.fillRect(WX - 6, y + 2, 12, 3);
-      if (st.flash) say2(ctx, '횡단 성공! 차가 빨라져요', 17, '16px "Black Han Sans", sans-serif');
+      if (st.flash) say2(ctx, '횡단 성공! 차가 조금 빨라져요', 17, '16px "Black Han Sans", sans-serif');
       if (!st.run && !st.over) { say2(ctx, '눌러서 시작', 17, '16px "Black Han Sans", sans-serif'); }
       if (st.over) panel(ctx, '사고!', st.score + '번 횡단', '최고 ' + bestText('cross', '번') + ' · 다시 하려면 누르세요', col.bad);
     }
-    cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.focus(); go(); });
+    // 화면 아래쪽(대기 구역 근처) 탭 = 뒤로, 나머지 = 앞으로
+    cv.addEventListener('pointerdown', e => {
+      e.preventDefault(); cv.focus();
+      const b = cv.getBoundingClientRect(), py = (e.clientY - b.top) / b.height * CH;
+      if (st.run && py > CH - 70) back(); else go();
+    });
     reset(); requestAnimationFrame(frame);
     return {
-      key(e) { if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) go(); } },
+      key(e) {
+        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) go(); }
+        else if (e.code === 'ArrowDown') { e.preventDefault(); if (!e.repeat) back(); }
+      },
       leave() { if (st.run) reset(); },
     };
   })();
