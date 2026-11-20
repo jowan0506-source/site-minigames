@@ -79,6 +79,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
 .overlay p { margin: 0; color: var(--muted); font-size: 14px; }
 .btn { font: 600 15px var(--body); padding: 10px 18px; border: 2px solid var(--ink); border-radius: 3px; background: var(--accent); color: #1d2733; cursor: pointer; }
 .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.timebar.inf { background: var(--bad); }
 .timebar { position: absolute; left: 0; top: 0; height: 6px; background: var(--accent); z-index: 2; }
 
 /* 자재 짝맞추기 */
@@ -236,7 +237,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
         <div class="wall" id="wall"></div>
         <div class="overlay" id="crOver">
           <h2 id="crTitle">균열 보수</h2>
-          <p id="crMsg">45초 동안 벽에 쉴 새 없이 생기는 균열을 눌러 보수하세요.<br>멀쩡한 패널을 누르면 1개 감점, 놓친 균열은 누수로 표시돼요.</p>
+          <p id="crMsg">45초 동안 벽에 쉴 새 없이 생기는 균열을 눌러 보수하세요.<br>멀쩡한 패널을 누르면 1개 감점이에요. <b>120개를 넘기면 무한 모드</b>: 시간 제한이 사라지고, 한 번이라도 틀리거나 놓치면 끝나요.</p>
           <button class="btn" id="crStart" type="button">보수 시작</button>
         </div>
       </div>
@@ -654,7 +655,8 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     const elS = $('crScore'), elT = $('crTime'), elB = $('crBest'), bar = $('crBar'), over = $('crOver');
     elB.textContent = store.get('best_crack', 0);
     const cells = [];
-    let run = false, score = 0, t0 = 0, nextAt = 0, raf = 0, leaks = 0;
+    const INF = 120;   // 이 점수부터 무한 모드: 시간 제한 없음, 한 번이라도 틀리거나 놓치면 끝
+    let run = false, score = 0, t0 = 0, nextAt = 0, raf = 0, leaks = 0, inf = false, infT = 0, why = '';
     function crackPath() {
       let x = 15 + Math.random() * 70, y = 5, d = 'M' + x.toFixed(0) + ' ' + y;
       while (y < 95) { y += 10 + Math.random() * 12; x = Math.max(5, Math.min(95, x + (Math.random() - .5) * 34)); d += ' L' + x.toFixed(0) + ' ' + Math.min(95, y).toFixed(0); }
@@ -678,34 +680,39 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     function hit(c) {
       if (!run) return;
       if (c.on) { show(c, false); flash(c, 'fixed'); score++; }
+      else if (inf) { flash(c, 'leak'); why = '멀쩡한 패널을 눌렀어요'; elS.textContent = score; return end(); }
       else { score = Math.max(0, score - 1); flash(c, 'leak'); }
       elS.textContent = score;
     }
     function loop(now) {
       const el = (now - t0) / 1000, left = Math.max(0, DUR - el);
-      elT.textContent = left.toFixed(1); bar.style.width = (left / DUR * 100) + '%';
-      const k = el / DUR, life = 1700 - 800 * k;
+      if (!inf && score >= INF) { inf = true; infT = now; bar.classList.add('inf'); }
+      if (inf) { elT.textContent = '무한'; bar.style.width = '100%'; }
+      else { elT.textContent = left.toFixed(1); bar.style.width = (left / DUR * 100) + '%'; }
+      // 무한 모드에서는 1분에 걸쳐 조금씩 더 빨라짐
+      const k = inf ? 1 + Math.min(1, (now - infT) / 60000) * 0.6 : Math.min(1, el / DUR), life = Math.max(500, 1700 - 800 * k);
       if (now >= nextAt) {
         const free = cells.filter(c => !c.on && c.mark < now);
         if (free.length) { const c = free[Math.floor(Math.random() * free.length)]; show(c, true); c.until = now + life; }
-        nextAt = now + (520 - 300 * k) * (0.6 + Math.random() * 0.8);
+        nextAt = now + Math.max(140, 520 - 300 * k) * (0.6 + Math.random() * 0.8);
       }
       cells.forEach(c => {
-        if (c.on && now > c.until) { show(c, false); flash(c, 'leak'); leaks++; }
+        if (c.on && now > c.until) { show(c, false); flash(c, 'leak'); leaks++; if (inf) { why = '균열을 놓쳤어요'; } }
         else if (!c.on && c.mark && now > c.mark) { c.mark = 0; c.el.className = 'cell'; }
       });
-      if (left <= 0) return end();
+      if (inf && why) return end();
+      if (!inf && left <= 0) return end();
       raf = requestAnimationFrame(loop);
     }
     function start() {
       cells.forEach(c => { show(c, false); c.mark = 0; });
-      score = 0; leaks = 0; elS.textContent = 0; run = true; over.hidden = true;
+      score = 0; leaks = 0; inf = false; why = ''; bar.classList.remove('inf'); elS.textContent = 0; run = true; over.hidden = true;
       t0 = performance.now(); nextAt = t0 + 300; raf = requestAnimationFrame(loop);
     }
     function end() {
       run = false; cancelAnimationFrame(raf);
       $('crTitle').textContent = '보수 ' + score + '개';
-      $('crMsg').textContent = '놓친 균열 ' + leaks + '개 · 최고 ' + Math.max(score, +store.get('best_crack', 0)) + '개';
+      $('crMsg').textContent = (inf ? '무한 모드 종료: ' + why + ' · ' : '놓친 균열 ' + leaks + '개 · ') + '최고 ' + Math.max(score, +store.get('best_crack', 0)) + '개';
       $('crStart').textContent = '다시 보수';
       saveBest('crack', score, elB); over.hidden = false;
     }
