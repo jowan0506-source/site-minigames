@@ -372,21 +372,21 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
                   set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
   const GAMES = {
     // ref = 종합 순위에서 100점이 되는 기록 (짝맞추기는 적을수록 좋음)
-    slab:  { name: '슬래브 쌓기', field: 'best',  unit: 'F',  ref: 30 },
-    crack: { name: '균열 보수',   field: 'crack', unit: '개', ref: 90 },
-    memory:{ name: '자재 짝맞추기', field: 'memtime', unit: '초', asc: true, ref: 45 },
-    pour:  { name: '타설 맞추기', field: 'pour', unit: '점', ref: 450 },
-    catch: { name: '자재 받기',   field: 'catch', unit: '개', ref: 60 },
+    slab:  { name: '슬래브 쌓기', field: 'best',  unit: 'F',  ref: 150 },
+    crack: { name: '균열 보수',   field: 'crack', unit: '개', ref: 120 },
+    memory:{ name: '자재 짝맞추기', field: 'memtime', unit: '초', asc: true, ref: 35 },
+    pour:  { name: '타설 맞추기', field: 'pour', unit: '점', ref: 495 },
+    catch: { name: '자재 받기',   field: 'catch', unit: '개', ref: 500 },
     level: { name: '수평 유지',   field: 'level', unit: '초', ref: 60 },
-    torque:{ name: '토크 조이기', field: 'torque', unit: '개', ref: 25 },
-    demo:  { name: '철거 작업',   field: 'demo', unit: '개', ref: 80 },
-    truck: { name: '덤프트럭 질주', field: 'truck', unit: 'm', ref: 1000 },
-    drone: { name: '드론 점검',   field: 'drone', unit: '개', ref: 20 },
-    hook:  { name: '크레인 후크', field: 'hook', unit: '점', ref: 400 },
-    snake: { name: '레미콘 행렬', field: 'snake', unit: '개', ref: 30 },
-    climb: { name: '비계 오르기', field: 'climb', unit: 'm', ref: 300 },
+    torque:{ name: '토크 조이기', field: 'torque', unit: '개', ref: 30 },
+    demo:  { name: '철거 작업',   field: 'demo', unit: '개', ref: 150 },
+    truck: { name: '덤프트럭 질주', field: 'truck', unit: 'm', ref: 1500 },
+    drone: { name: '드론 점검',   field: 'drone', unit: '개', ref: 40 },
+    hook:  { name: '크레인 후크', field: 'hook', unit: '점', ref: 500 },
+    snake: { name: '레미콘 행렬', field: 'snake', unit: '개', ref: 40 },
+    climb: { name: '비계 오르기', field: 'climb', unit: 'm', ref: 1200 },
     cross: { name: '현장 횡단',   field: 'cross', unit: '번', ref: 15 },
-    react: { name: '신호수 반응', field: 'react', unit: 'ms', asc: true, ref: 250 },
+    react: { name: '신호수 반응', field: 'react', unit: 'ms', asc: true, ref: 220 },
   };
   let current = null;
 
