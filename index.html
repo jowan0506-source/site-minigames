@@ -243,6 +243,15 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
 .card.up::before { opacity: 0; }
 .cell { border-radius: 0; }
 
+#rankList li.legend { outline: 2px solid #e0a800; outline-offset: -2px; box-shadow: 0 0 0 1px #000 inset, 0 0 14px rgba(224,168,0,.35); background: linear-gradient(90deg, rgba(224,168,0,.18), transparent 70%); }
+#rankList .prev { display: inline-block; margin-left: 6px; padding: 0 5px; font: 400 10px var(--stencil, monospace); letter-spacing: .05em; color: #1a1300; background: linear-gradient(180deg, #fff1a6, #e0a800); border: 1px solid #000; border-radius: 2px; vertical-align: 1px; }
+#rankList li.hall { grid-template-columns: 30px 1fr auto; padding: 10px 2px; }
+#rankList li.hall .trophy { font-size: 22px; text-align: center; }
+#rankList li.hall .nm { font-family: "Black Han Sans", sans-serif; font-size: 17px; color: #e0a800; }
+#rankList li.hall .sub { display: block; margin-left: 0; font-family: var(--body); font-size: 11px; }
+.reset-info { margin: 0; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rank-tabs { grid-template-columns: 1fr 1fr 1fr !important; }
+.rank-tabs button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>
 
 </head>
@@ -292,11 +301,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
         <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="2" y="2" width="6" height="12" fill="currentColor"/><rect x="2" y="24" width="6" height="8" fill="currentColor"/><path d="M14 17h18" stroke="currentColor" stroke-width="2"/><rect x="19" y="15" width="8" height="6" fill="currentColor"/><path d="M12 13h6M28 13h6" stroke="currentColor" stroke-width="2"/></svg>
         <b>드론 점검</b><small>H빔 사이로 날기</small>
       </button>
-   <button class="tile" data-game="hook" type="button">
-        <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M2 4h30" stroke="currentColor" stroke-width="3"/><path d="M17 4l7 16" stroke="currentColor" stroke-width="1.5"/><path d="M21 20a3 3 0 1 0 6 0" fill="none" stroke="currentColor" stroke-width="2.5"/><rect x="5" y="26" width="14" height="4" fill="currentColor"/></svg>
-        <b>크레인 후크</b><small>흔들리는 후크로 자재 인양</small>
-      </button>
-      <button class="tile" data-game="snake" type="button">
+   <button class="tile" data-game="snake" type="button">
         <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="22" y="6" width="8" height="8" fill="currentColor"/><rect x="22" y="15" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="15" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/><rect x="4" y="15" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 28l4 4H4z" fill="currentColor"/></svg>
         <b>레미콘 행렬</b><small>자재 실을수록 길어지기</small>
       </button>
@@ -410,13 +415,6 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       <div class="stage"><canvas id="cvDrone" tabindex="0" aria-label="드론 점검 화면. 누르면 드론이 떠오릅니다"></canvas></div>
       <p class="hint">누를 때마다 드론이 떠올라요. 손을 놓으면 내려가요. 위아래 H빔 기둥 사이 틈으로 통과하세요. 통과할수록 틈이 좁아져요. <kbd>Space</kbd> · <kbd>↑</kbd> · 클릭 · 탭</p>
     </section>
-    <section class="game" id="g-hook" hidden>
-      <div class="game-head"><h1>크레인 후크</h1>
-        <div class="stats"><div class="stat"><small>인양 점수</small><b id="hkScore">0</b></div><div class="stat"><small>최고</small><b id="hkBest">-</b></div></div></div>
-      <div class="stage"><canvas id="cvHook" tabindex="0" aria-label="크레인 후크 화면. 누르면 후크가 내려갑니다"></canvas></div>
-      <p class="hint">흔들리는 후크가 자재를 향할 때 누르면 내려가서 건져 올려요. 무거운 자재일수록 천천히 올라오지만 점수가 높아요. 폐석은 무겁고 5점뿐이니 피하세요. 45초 동안 최대한 많이! <kbd>Space</kbd> · 클릭 · 탭</p>
-    </section>
-
     <section class="game" id="g-snake" hidden>
       <div class="game-head"><h1>레미콘 행렬</h1>
         <div class="stats"><div class="stat"><small>운반한 자재</small><b id="snScore">0</b></div><div class="stat"><small>최고</small><b id="snBest">-</b></div></div></div>
@@ -448,12 +446,14 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     <section class="rank" aria-labelledby="rankTitle">
       <div class="rank-tabs" role="group" aria-label="랭킹 종류">
         <button type="button" id="tabGame" aria-pressed="true">이 게임 랭킹</button>
-        <button type="button" id="tabAll" aria-pressed="false">종합 순위</button>
+        <button type="button" id="tabAll" aria-pressed="false">주간 종합</button>
+        <button type="button" id="tabHall" aria-pressed="false">명예의 전당</button>
       </div>
-      <div class="rank-head"><h2 id="rankTitle">랭킹 TOP 10</h2><span id="rankState">불러오는 중…</span></div>
+      <p class="reset-info" id="resetInfo">이번 주 랭킹 · 매주 월요일 00시 초기화</p>
+      <div class="rank-head"><h2 id="rankTitle">랭킹 TOP 20</h2><span id="rankState">불러오는 중…</span></div>
       <details class="rank-note" id="rankNote" hidden>
         <summary>종합 점수 계산법</summary>
-        <p>게임마다 기준 기록을 100점으로 환산해 더해요(게임당 최대 100점, 15개 게임 합계 최대 1,500점). 기준보다 잘해도 100점에서 멈춰요.</p>
+        <p id="refHead"></p>
         <p id="refList"></p>
       </details>
       <form id="nickForm">
@@ -483,7 +483,6 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     demo:  { name: '철거 작업',   field: 'demo', unit: '개', ref: 150 },
     truck: { name: '덤프트럭 질주', field: 'truck', unit: 'm', ref: 1500 },
     drone: { name: '드론 점검',   field: 'drone', unit: '개', ref: 40 },
-    hook:  { name: '크레인 후크', field: 'hook', unit: '점', ref: 500 },
     snake: { name: '레미콘 행렬', field: 'snake', unit: '개', ref: 40 },
     climb: { name: '비계 오르기', field: 'climb', unit: 'm', ref: 1200 },
     cross: { name: '현장 횡단',   field: 'cross', unit: '번', ref: 15 },
@@ -491,25 +490,72 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
   };
   let current = null;
 
-  // ───────── 랭킹 (scores/<내 id> = {nick, best, crack, memory, at}) ─────────
+  // ───────── 주차 (매주 월요일 00시 KST 초기화) ─────────
+  // 주차 번호 = floor((UTC ms + 9시간 + 3일) / 7일). 1970-01-01(목) 기준이라 +3일 하면 월요일 경계가 됨.
+  const WEEK = 604800000, OFF = 291600000, WK0 = 2968;   // WK0 = 첫 주(11/16~11/22), 예전 'scores' 컬렉션 사용
+  const weekNow = () => Math.floor((Date.now() + OFF) / WEEK);
+  const weekPath = wk => wk === WK0 ? 'scores' : 'weeks/' + wk + '/scores';
+  function weekLabel(wk) {
+    const s = new Date(wk * WEEK - OFF + 9 * 3600000), e = new Date(s.getTime() + 6 * 86400000);
+    const f = d => (d.getUTCMonth() + 1) + '/' + d.getUTCDate();
+    return f(s) + ' ~ ' + f(e);
+  }
+  let wkNow = weekNow();
+
+  // ───────── 랭킹 (weeks/<주차>/scores/<내 id> = {nick, at, 게임별 기록}) ─────────
   const rank = (() => {
     const elState = $('rankState'), elList = $('rankList'), form = $('nickForm'), inp = $('nick');
-    let db = null, myId = null, mine = {}, rows = [], unsub = null, writing = false, ready = false;
+    let db = null, myId = null, mine = {}, unsub = null, writing = false, ready = false;
     inp.value = store.get('slabNick', '');
     const say = t => { elState.textContent = t; };
     const empty = t => { const li = document.createElement('li'); li.className = 'empty'; li.textContent = t; elList.replaceChildren(li); };
     let mode = 'game';
+    const MAX = Object.keys(GAMES).length * 100;
     // 종합 점수: 게임별 기준 기록 = 100점, 최대 100점
     const pts = (k, v) => { const g = GAMES[k]; v = +v; if (!(v > 0)) return 0; return Math.min(100, Math.round((g.asc ? g.ref / v : v / g.ref) * 100)); };
     const totalOf = d => { let t = 0, n = 0; for (const k in GAMES) { const p = pts(k, d[GAMES[k].field]); if (p > 0) { t += p; n++; } } return { t, n }; };
+    $('refHead').textContent = '게임마다 기준 기록을 100점으로 환산해 더해요(게임당 최대 100점, ' + Object.keys(GAMES).length + '개 게임 합계 최대 ' + MAX.toLocaleString() + '점). 기준보다 잘해도 100점에서 멈춰요.';
     $('refList').textContent = Object.values(GAMES).map(g => g.name + ' ' + g.ref + g.unit + (g.asc ? '(이하)' : '')).join(' · ');
     function setMode(m) {
-      mode = m; $('tabGame').setAttribute('aria-pressed', m === 'game'); $('tabAll').setAttribute('aria-pressed', m === 'all');
-      $('rankNote').hidden = m !== 'all'; render();
+      mode = m;
+      $('tabGame').setAttribute('aria-pressed', m === 'game'); $('tabAll').setAttribute('aria-pressed', m === 'all'); $('tabHall').setAttribute('aria-pressed', m === 'hall');
+      $('rankNote').hidden = m !== 'all'; form.hidden = m === 'hall'; render();
+      if (m === 'hall') loadHall();
     }
     $('tabGame').addEventListener('click', () => setMode('game'));
     $('tabAll').addEventListener('click', () => setMode('all'));
-    // 전체 기록을 한 번 구독해 두고, 게임·탭을 바꿀 때는 다시 읽지 않고 화면만 새로 그림
+    $('tabHall').addEventListener('click', () => setMode('hall'));
+
+    // ── 지난 주 결과 (지난 주 기록은 규칙상 수정 불가 → 브라우저에 영구 캐시) ──
+    const weekCache = {};
+    async function weekResult(wk) {
+      if (weekCache[wk]) return weekCache[wk];
+      const key = 'wres2_' + wk;
+      try { const c = JSON.parse(store.get(key, 'null')); if (c) return (weekCache[wk] = c); } catch (e) {}
+      const q = await db.collection(weekPath(wk)).limit(2000).get();
+      const list = q.docs.map(x => { const d = x.data() || {}; return { id: x.id, nick: String(d.nick || '익명'), t: totalOf(d).t }; })
+                         .filter(r => r.t > 0).sort((a, b) => b.t - a.t);
+      const res = { top: list.slice(0, 5), n: list.length };
+      store.set(key, JSON.stringify(res)); return (weekCache[wk] = res);
+    }
+    let prevTop = {};   // 전주 종합 1~5등: { uid: 등수 }
+    async function loadPrev() {
+      prevTop = {};
+      if (!db || wkNow - 1 < WK0) return;
+      try { const r = await weekResult(wkNow - 1); r.top.forEach((p, i) => { prevTop[p.id] = i + 1; }); } catch (e) {}
+      render();
+    }
+    let hall = null;
+    async function loadHall() {
+      if (!db) { empty('랭킹 서버에 연결되지 않았어요.'); return; }
+      hall = [];
+      for (let wk = wkNow - 1; wk >= WK0; wk--) {
+        try { const r = await weekResult(wk); hall.push({ wk, champ: r.top[0], n: r.n }); } catch (e) {}
+      }
+      if (mode === 'hall') render();
+    }
+
+    // ── 이번 주 전체 기록 구독 ──
     let docs = [];
     function rowsFor() {
       const g = GAMES[current];
@@ -526,53 +572,89 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       return list;
     }
     function rowEl(r, g) {
-      const li = document.createElement('li'); if (r.id === myId) li.className = 'me';
+      const li = document.createElement('li'); const cls = [];
+      if (r.id === myId) cls.push('me');
+      if (prevTop[r.id]) cls.push('legend');
+      li.className = cls.join(' ');
       const a = document.createElement('span'), rk = r.rk;
       const tier = rk <= 3 ? 'm' + rk : rk <= 10 ? 'm-top' : rk <= 20 ? 'm-good' : 'm-rest';
       a.className = 'medal ' + tier; a.textContent = rk;
       a.title = rk === 1 ? '금메달' : rk === 2 ? '은메달' : rk === 3 ? '동메달' : rk <= 10 ? '우수' : rk <= 20 ? '장려' : rk + '위';
       a.setAttribute('aria-label', rk + '등 ' + a.title);
       const b = document.createElement('span'); b.className = 'nm'; b.textContent = r.nick + (r.id === myId ? ' (나)' : '');
+      if (prevTop[r.id]) { const p = document.createElement('span'); p.className = 'prev'; p.textContent = '전주 ' + prevTop[r.id] + '위'; b.append(p); }
       if (mode === 'all') { const s = document.createElement('span'); s.className = 'sub'; s.textContent = r.n + '개 게임'; b.append(s); }
       const c = document.createElement('span'); c.className = 'fl'; c.textContent = mode === 'all' ? r.v.toLocaleString() + '점' : r.v + g.unit;
       li.append(a, b, c); return li;
     }
+    function renderHall() {
+      $('rankTitle').textContent = '명예의 전당';
+      say('주간 종합 1위 박제');
+      if (!hall) { empty('불러오는 중이에요.'); return; }
+      if (!hall.length) { empty('첫 주가 진행 중이에요. ' + weekLabel(wkNow).split(' ~ ')[1] + ' 일요일이 지나 월요일 00시가 되면 첫 1위가 박제돼요.'); return; }
+      elList.replaceChildren(...hall.map(h => {
+        const li = document.createElement('li'); li.className = 'hall' + (h.champ && h.champ.id === myId ? ' me' : '');
+        const a = document.createElement('span'); a.className = 'trophy'; a.textContent = '🏆'; a.setAttribute('aria-hidden', 'true');
+        const b = document.createElement('span'); b.className = 'nm';
+        b.textContent = h.champ ? h.champ.nick + (h.champ.id === myId ? ' (나)' : '') : '기록 없음';
+        const w = document.createElement('span'); w.className = 'sub'; w.textContent = weekLabel(h.wk) + ' · ' + h.n + '명 참가'; b.append(w);
+        const c = document.createElement('span'); c.className = 'fl'; c.textContent = h.champ ? h.champ.t.toLocaleString() + '점' : '-';
+        li.append(a, b, c); return li;
+      }));
+    }
     function render() {
       const g = GAMES[current]; if (!g) return;
-      $('tabGame').textContent = g.name + ' 랭킹';
-      $('rankTitle').textContent = mode === 'all' ? '종합 순위 TOP 20' : g.name + ' 랭킹 TOP 20';
+      $('tabGame').textContent = g.name;
+      if (mode === 'hall') return renderHall();
+      $('rankTitle').textContent = mode === 'all' ? '주간 종합 TOP 20' : g.name + ' 주간 TOP 20';
       if (!ready) return;
       const list = rowsFor();
       const meRow = list.find(r => r.id === myId);
-      if (mode === 'all') say(inp.value.trim() ? '내 종합 ' + totalOf(mine).t + '점 / 1,500' : '닉네임을 저장하면 기록이 올라가요');
-      else say(inp.value.trim() ? '내 최고 ' + (mine[g.field] ? mine[g.field] + g.unit : '없음') : '닉네임을 저장하면 기록이 올라가요');
-      if (!list.length) { empty('아직 기록이 없어요. 닉네임을 저장하고 첫 기록을 올려 보세요.'); return; }
+      if (mode === 'all') say(inp.value.trim() ? '내 종합 ' + totalOf(mine).t + '점 / ' + MAX.toLocaleString() : '닉네임을 저장하면 기록이 올라가요');
+      else say(inp.value.trim() ? '이번 주 내 최고 ' + (mine[g.field] ? mine[g.field] + g.unit : '없음') : '닉네임을 저장하면 기록이 올라가요');
+      if (!list.length) { empty('이번 주 기록이 아직 없어요. 첫 기록의 주인공이 되어 보세요.'); return; }
       const els = list.slice(0, 20).map(r => rowEl(r, g));
       if (meRow && meRow.rk > 20) {   // 20등 밖이면 맨 아래에 내 순위 따로
         const gap = document.createElement('li'); gap.className = 'empty gap'; gap.textContent = '⋯ ' + list.length + '명 중';
         els.push(gap, rowEl(meRow, g));
       }
       const foot = document.createElement('li'); foot.className = 'empty foot';
-      foot.textContent = '참가자 ' + list.length + '명' + (meRow ? ' · 내 순위 ' + meRow.rk + '위' : '');
+      foot.textContent = '참가자 ' + list.length + '명' + (meRow ? ' · 내 순위 ' + meRow.rk + '위' : '') + (Object.keys(prevTop).length ? ' · 금테두리 = 전주 종합 TOP 5' : '');
       els.push(foot);
       elList.replaceChildren(...els);
     }
     function watch() {
       if (!db || unsub) { render(); return; }
       const timer = setTimeout(() => say('랭킹 서버 응답이 없어요.'), 10000);
-      ready = false; empty('랭킹을 불러오는 중이에요.');
-      unsub = db.collection('scores').limit(2000).onSnapshot(q => {
+      ready = false; if (mode !== 'hall') empty('랭킹을 불러오는 중이에요.');
+      unsub = db.collection(weekPath(wkNow)).limit(2000).onSnapshot(q => {
         clearTimeout(timer); ready = true;
         docs = q.docs.map(x => { const d = x.data() || {}; return { id: x.id, nick: String(d.nick || '익명'), data: d }; });
         render();
       }, () => { clearTimeout(timer); say('랭킹을 불러오지 못했어요.'); });
     }
+    async function loadMine() {
+      mine = {};
+      try { const s = await db.doc(weekPath(wkNow) + '/' + myId).get(); if (s.exists) mine = s.data() || {}; } catch (e) {}
+    }
+    // 남은 시간 표시 + 월요일 00시가 지나면 새 주로 전환
+    function tickWeek() {
+      const w = weekNow();
+      const left = (w + 1) * WEEK - OFF - Date.now(), dd = Math.floor(left / 86400000), hh = Math.floor(left % 86400000 / 3600000), mm = Math.floor(left % 3600000 / 60000);
+      $('resetInfo').textContent = '이번 주 ' + weekLabel(w) + ' · 초기화까지 ' + (dd ? dd + '일 ' : '') + hh + '시간 ' + mm + '분';
+      if (w !== wkNow && db) {
+        wkNow = w; if (unsub) { unsub(); unsub = null; }
+        hall = null; docs = []; loadMine().then(() => { watch(); loadPrev(); if (mode === 'hall') loadHall(); });
+      }
+    }
+    tickWeek(); setInterval(tickWeek, 30000);
+
     async function write(patch) {
       const nick = inp.value.trim();
       if (!db || !myId || !nick || writing) return;
       writing = true;
       const next = { ...mine, ...patch, nick: nick.slice(0, 12), at: Date.now() };
-      try { await db.doc('scores/' + myId).set(next); mine = next; say('기록 저장 완료'); }
+      try { await db.doc(weekPath(wkNow) + '/' + myId).set(next); mine = next; say('기록 저장 완료'); }
       catch (e) { say('기록을 올리지 못했어요. 잠시 후 다시 해 주세요.'); }
       writing = false;
     }
@@ -580,12 +662,12 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       e.preventDefault(); store.set('slabNick', inp.value.trim());
       if (!inp.value.trim()) { say('닉네임을 입력해 주세요.'); return; }
       if (!db) { say('랭킹 서버에 연결되지 않았어요.'); return; }
-      const patch = {};   // 이 기기의 최고 기록 중 더 높은 것 함께 올림
-      for (const k in GAMES) { const f = GAMES[k].field, local = +store.get('best_' + k, 0); if (better(k, local, mine[f])) patch[f] = local; }
+      const patch = {};   // 이 기기에서 이번 주에 세운 최고 기록 중 더 좋은 것 함께 올림
+      for (const k in GAMES) { const f = GAMES[k].field, local = +store.get('wbest_' + wkNow + '_' + k, 0); if (better(k, local, mine[f])) patch[f] = local; }
       write(patch);
     });
     (async () => {
-      // Firebase 익명 로그인 + Firestore (규칙: 각자 scores/<uid>만 쓰기)
+      // Firebase 익명 로그인 + Firestore (규칙: 각자 자기 문서만, 이번 주만 쓰기)
       let d = null, uid = null;
       try {
         if (window.firebase) {
@@ -616,8 +698,8 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
         }, () => { $('live').hidden = true; });
       } catch (e) { console.warn(e); }
 
-      try { const s = await db.doc('scores/' + myId).get(); if (s.exists) mine = s.data() || {}; } catch (e) {}
-      watch();
+      await loadMine();
+      watch(); loadPrev();
     })();
     return {
       switchTo() { render(); watch(); },
@@ -625,17 +707,21 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     };
   })();
 
-  // 새 기록이 더 좋은지 (짝맞추기는 적을수록 좋음)
+  // 새 기록이 더 좋은지 (짝맞추기·반응속도는 적을수록 좋음)
   function better(game, v, old) {
     if (!(v > 0)) return false;
     if (old === undefined || old === null || !(+old > 0)) return true;
     return GAMES[game].asc ? v < +old : v > +old;
   }
   function saveBest(game, v, el, unit) {
+    // 이 기기 최고 기록(화면 표시용, 영구)
     const raw = store.get('best_' + game, null), b = raw === null ? null : +raw;
     const nb = better(game, v, b) ? v : b;
     if (nb !== b) store.set('best_' + game, nb);
     el.textContent = (nb === null ? '-' : nb) + (unit || '');
+    // 이번 주 최고 기록(랭킹 저장용)
+    const wk = 'wbest_' + wkNow + '_' + game, wr = store.get(wk, null);
+    if (better(game, v, wr === null ? null : +wr)) store.set(wk, v);
     rank.submit(game, v);
   }
 
@@ -1398,89 +1484,6 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     };
   })();
 
-  // ───────── 11. 크레인 후크 ─────────
-  const hook = (() => {
-    const { cv, ctx } = mkCanvas('cvHook'), elS = $('hkScore'), elB = $('hkBest');
-    elB.textContent = bestText('hook');
-    const OX = CW / 2, OY = 46, DUR = 45;
-    const TYPES = [
-      { k: 'beam', r: 16, val: 50, sp: 1.3 }, { k: 'rebar', r: 13, val: 30, sp: 2.2 },
-      { k: 'bag', r: 12, val: 20, sp: 3.0 }, { k: 'bolt', r: 7, val: 15, sp: 5.0 }, { k: 'rock', r: 18, val: 5, sp: 1.1 },
-    ];
-    let st;
-    function scatter() {
-      const items = [];
-      for (let n = 0; n < 60 && items.length < 9; n++) {
-        const t = TYPES[[0, 0, 1, 1, 1, 2, 2, 3, 3, 4][Math.floor(Math.random() * 10)]];
-        const it = { ...t, x: 24 + Math.random() * (CW - 48), y: 140 + Math.random() * (CH - 180) };
-        if (items.every(o => Math.hypot(o.x - it.x, o.y - it.y) > o.r + it.r + 10)) items.push(it);
-      }
-      return items;
-    }
-    function reset() { st = { ang: 0, t: 0, phase: 'swing', len: 22, grab: null, items: scatter(), score: 0, time: DUR, run: false, over: false, pop: 0, popTxt: '' }; elS.textContent = '0'; }
-    const tip = () => [OX + Math.sin(st.ang) * st.len, OY + Math.cos(st.ang) * st.len];
-    function fire() {
-      if (st.over) { reset(); return; }
-      if (!st.run) { st.run = true; return; }
-      if (st.phase === 'swing') st.phase = 'out';
-    }
-    function drawItem(it, x, y) {
-      ctx.strokeStyle = col.ink; ctx.lineWidth = 1;
-      if (it.k === 'beam') { ctx.fillStyle = col.ink; ctx.fillRect(x - 18, y - 9, 36, 4); ctx.fillRect(x - 18, y + 5, 36, 4); ctx.fillRect(x - 2, y - 7, 4, 14); }
-      else if (it.k === 'rebar') { ctx.strokeStyle = col.bad; ctx.lineWidth = 3; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x - 14, y + i * 5 + 3); ctx.lineTo(x + 14, y + i * 5 - 3); ctx.stroke(); } ctx.lineWidth = 1; }
-      else if (it.k === 'bag') { ctx.fillStyle = col.top; ctx.fillRect(x - 11, y - 9, 22, 18); ctx.strokeRect(x - 10.5, y - 8.5, 21, 17); ctx.fillStyle = col.ink; ctx.font = '600 7px "IBM Plex Sans KR", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('시멘트', x, y + 3); }
-      else if (it.k === 'bolt') { ctx.fillStyle = col.acc; ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; ctx[i ? 'lineTo' : 'moveTo'](x + Math.cos(a) * 7, y + Math.sin(a) * 7); } ctx.closePath(); ctx.fill(); ctx.stroke(); }
-      else { ctx.fillStyle = col.muted; ctx.beginPath(); ctx.arc(x, y, 17, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
-    }
-    function frame() {
-      requestAnimationFrame(frame);
-      if (current !== 'hook') return;
-      if (st.run) {
-        st.time -= 1 / 60;
-        if (st.phase === 'swing') { st.t += 0.03; st.ang = Math.sin(st.t) * 1.2; }
-        else if (st.phase === 'out') {
-          st.len += 5.5; const [x, y] = tip();
-          const hit = st.items.find(it => Math.hypot(it.x - x, it.y - y) < it.r + 5);
-          if (hit) { st.grab = hit; st.items = st.items.filter(o => o !== hit); st.phase = 'back'; }
-          else if (x < 0 || x > CW || y > CH - 6) st.phase = 'back';
-        } else if (st.phase === 'back') {
-          st.len -= st.grab ? st.grab.sp : 7;
-          if (st.len <= 22) {
-            st.len = 22;
-            if (st.grab) { st.score += st.grab.val; elS.textContent = st.score; st.pop = 40; st.popTxt = '+' + st.grab.val; st.grab = null; }
-            st.phase = 'swing';
-            if (!st.items.length) st.items = scatter();
-          }
-        }
-        if (st.time <= 0) { st.time = 0; st.run = false; st.over = true; saveBest('hook', st.score, elB); }
-      } else if (!st.over) { st.t += 0.03; st.ang = Math.sin(st.t) * 1.2; }
-      if (st.pop) st.pop--;
-      paper(ctx);
-      ctx.fillStyle = col.muted; ctx.fillRect(0, CH - 6, CW, 6);
-      ctx.fillStyle = col.acc; ctx.fillRect(0, 30, CW, 8); ctx.strokeStyle = col.ink;
-      for (let x = 0; x < CW; x += 12) { ctx.beginPath(); ctx.moveTo(x, 38); ctx.lineTo(x + 6, 30); ctx.lineTo(x + 12, 38); ctx.stroke(); }
-      ctx.fillStyle = col.ink; ctx.fillRect(OX - 12, 36, 24, 12);
-      st.items.forEach(it => drawItem(it, it.x, it.y));
-      const [hx, hy] = tip();
-      ctx.strokeStyle = col.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(OX, OY); ctx.lineTo(hx, hy); ctx.stroke(); ctx.lineWidth = 1;
-      if (st.grab) drawItem(st.grab, hx, hy + st.grab.r * 0.6);
-      ctx.strokeStyle = col.acc; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(hx, hy + 4, 5, 0, Math.PI); ctx.stroke(); ctx.lineWidth = 1;
-      ctx.textAlign = 'left'; ctx.fillStyle = col.ink; ctx.font = '600 12px "IBM Plex Sans KR", sans-serif';
-      ctx.fillText('남은 시간 ' + Math.ceil(st.time) + '초', 8, 20);
-      ctx.textAlign = 'right'; ctx.fillStyle = col.muted; ctx.font = '500 10px "IBM Plex Mono", monospace';
-      ctx.fillText('H빔50 철근30 시멘트20 볼트15 폐석5', CW - 8, 20);
-      if (st.pop) say2(ctx, st.popTxt, 80, '22px "Black Han Sans", sans-serif');
-      if (!st.run && !st.over) { say2(ctx, '눌러서 작업 시작', 110, '22px "Black Han Sans", sans-serif'); say2(ctx, '후크가 자재를 향할 때 누르면 내려가요', 130, '12px "IBM Plex Sans KR", sans-serif', col.muted); }
-      if (st.over) panel(ctx, '작업 종료', st.score + '점 인양', '최고 ' + bestText('hook', '점') + ' · 다시 하려면 누르세요');
-    }
-    cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.focus(); fire(); });
-    reset(); requestAnimationFrame(frame);
-    return {
-      key(e) { if (e.code === 'Space' || e.code === 'ArrowDown' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) fire(); } },
-      leave() { if (st.run) reset(); },
-    };
-  })();
-
   // ───────── 12. 레미콘 행렬 ─────────
   const snake = (() => {
     const { cv, ctx } = mkCanvas('cvSnake'), elS = $('snScore'), elB = $('snBest');
@@ -1742,7 +1745,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
   })();
 
   // ───────── 게임 전환 ─────────
-  const mods = { slab, crack, memory, pour, catch: catcher, level, torque, demo, truck, drone, hook, snake, climb, cross, react };
+  const mods = { slab, crack, memory, pour, catch: catcher, level, torque, demo, truck, drone, snake, climb, cross, react };
   function go(name) {
     if (!GAMES[name]) name = 'slab';
     if (current === name) return;
