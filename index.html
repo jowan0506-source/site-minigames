@@ -1555,7 +1555,12 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     const C = 20, NX = CW / C, NY = CH / C;
     let st;
     function place() {
-      let f; do { f = { x: Math.floor(Math.random() * NX), y: 1 + Math.floor(Math.random() * (NY - 1)) }; } while (st.body.some(b => b.x === f.x && b.y === f.y));
+      // 벽 바로 옆(맨 끝 줄)은 10%만 허용, 나머지는 벽에서 한 칸 이상 떨어진 안쪽에 생성
+      const edgeOk = Math.random() < 0.1;
+      const x0 = edgeOk ? 0 : 1, x1 = edgeOk ? NX - 1 : NX - 2, y0 = edgeOk ? 1 : 2, y1 = edgeOk ? NY - 1 : NY - 2;
+      let f, n = 0;
+      do { f = { x: x0 + Math.floor(Math.random() * (x1 - x0 + 1)), y: y0 + Math.floor(Math.random() * (y1 - y0 + 1)) }; }
+      while (st.body.some(b => b.x === f.x && b.y === f.y) && ++n < 500);
       st.food = f;
     }
     function reset() { st = { body: [{ x: 7, y: 12 }, { x: 7, y: 13 }, { x: 7, y: 14 }], dir: { x: 0, y: -1 }, nd: { x: 0, y: -1 }, tick: 0, every: 9, score: 0, run: false, over: false }; place(); elS.textContent = '0'; }
