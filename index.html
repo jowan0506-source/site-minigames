@@ -313,10 +313,6 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
         <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M9 12a8 8 0 0 1 16 0z" fill="currentColor"/><rect x="5" y="24" width="24" height="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="31" r="2" fill="currentColor"/><circle cx="24" cy="31" r="2" fill="currentColor"/></svg>
         <b>자재 받기</b><small>안전모 받고 벽돌 피하기</small>
       </button>
-      <button class="tile" data-game="level" type="button">
-        <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="2" y="12" width="30" height="6" fill="currentColor" transform="rotate(-6 17 15)"/><rect x="11" y="8" width="12" height="5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5" transform="rotate(-6 17 15)"/><path d="M17 18l-6 12h12z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-        <b>수평 유지</b><small>흔들리는 보 버티기</small>
-      </button>
       <button class="tile" data-game="torque" type="button">
         <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M5 26a14 14 0 1 1 24 0" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M17 24L24 11" stroke="currentColor" stroke-width="2.5"/><circle cx="17" cy="24" r="3" fill="currentColor"/></svg>
         <b>토크 조이기</b><small>초록 구간에서 볼트 조이기</small>
@@ -410,14 +406,6 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
         <div class="stats"><div class="stat"><small>받은 안전모</small><b id="caScore">0</b></div><div class="stat"><small>최고</small><b id="caBest">-</b></div></div></div>
       <div class="stage"><canvas id="cvCatch" tabindex="0" aria-label="자재 받기 화면. 운반카를 좌우로 움직여 안전모를 받습니다"></canvas></div>
       <p class="hint">운반카로 노란 안전모를 받고 빨간 벽돌은 피하세요. 벽돌을 3번 받으면 끝나요. 안전모를 놓치는 건 감점이 없어요. 마우스·손가락을 좌우로 움직이거나 <kbd>←</kbd> <kbd>→</kbd></p>
-    </section>
-
-    <!-- 수평 유지 -->
-    <section class="game" id="g-level" hidden>
-      <div class="game-head"><h1>수평 유지</h1>
-        <div class="stats"><div class="stat"><small>버틴 시간</small><b id="lvTime">0.0초</b></div><div class="stat"><small>최고</small><b id="lvBest">-</b></div></div></div>
-      <div class="stage"><canvas id="cvLevel" tabindex="0" aria-label="수평 유지 화면. 내려가는 쪽을 눌러 보를 수평으로 유지합니다"></canvas></div>
-      <p class="hint">바람에 보가 기울어요. 내려가는 쪽을 누르고 있으면 그쪽이 올라가요. 수평계 기포가 가운데 있게 버티세요. 화면 왼쪽·오른쪽 꾹 또는 <kbd>←</kbd> <kbd>→</kbd></p>
     </section>
 
     <!-- 토크 조이기 -->
@@ -520,7 +508,6 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     memory:{ name: '자재 짝맞추기', field: 'memtime', unit: '초', asc: true, ref: 35 },
     pour:  { name: '타설 맞추기', field: 'pour', unit: '점', ref: 495 },
     catch: { name: '자재 받기',   field: 'catch', unit: '개', ref: 500 },
-    level: { name: '수평 유지',   field: 'level', unit: '초', ref: 60 },
     torque:{ name: '토크 조이기', field: 'torque', unit: '개', ref: 30 },
     demo:  { name: '철거 작업',   field: 'demo', unit: '개', ref: 150 },
     truck: { name: '덤프트럭 질주', field: 'truck', unit: 'm', ref: 1500 },
@@ -1196,67 +1183,6 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     };
   })();
 
-  // ───────── 6. 수평 유지 ─────────
-  const level = (() => {
-    const { cv, ctx } = mkCanvas('cvLevel'), elT = $('lvTime'), elB = $('lvBest');
-    elB.textContent = bestText('level', '초');
-    const PX = CW / 2, PY = 250, LIM = 0.42;
-    let st;
-    function reset() { st = { th: 0.06, om: 0, t: 0, run: false, over: false, wind: 0, L: false, R: false, pL: false, pR: false }; elT.textContent = '0.0초'; }
-    function start() { if (st.run) return; reset(); st.th = 0; st.run = true; }
-    function frame() {
-      requestAnimationFrame(frame);
-      if (current !== 'level') return;
-      if (st.run) {
-        st.t += 1 / 60; const d = Math.min(1, st.t / 45);
-        st.wind += (Math.random() - .5) * 0.00008 * (1 + 2 * d);
-        const wl = 0.00035 * (1 + 1.5 * d); st.wind = Math.max(-wl, Math.min(wl, st.wind));
-        const inp = ((st.R || st.pR) ? -1 : 0) + ((st.L || st.pL) ? 1 : 0);   // 내려간 쪽을 누르면 그쪽이 올라감
-        st.om += Math.sin(st.th) * 0.0022 + st.wind + inp * 0.0011;
-        st.om *= 0.985; st.th += st.om;
-        elT.textContent = st.t.toFixed(1) + '초';
-        if (Math.abs(st.th) > LIM) { st.run = false; st.over = true; saveBest('level', Math.round(st.t * 10) / 10, elB, '초'); }
-      }
-      paper(ctx);
-      ctx.fillStyle = col.muted; ctx.fillRect(0, PY + 60, CW, CH - PY - 60);
-      ctx.fillStyle = col.ink; ctx.beginPath(); ctx.moveTo(PX, PY); ctx.lineTo(PX - 26, PY + 60); ctx.lineTo(PX + 26, PY + 60); ctx.closePath(); ctx.fill();
-      ctx.save(); ctx.translate(PX, PY); ctx.rotate(st.th);
-      ctx.fillStyle = col.slab; ctx.fillRect(-125, -16, 250, 16); ctx.fillStyle = col.top; ctx.fillRect(-125, -16, 250, 4);
-      ctx.strokeStyle = col.ink; ctx.strokeRect(-124.5, -15.5, 249, 15);
-      ctx.fillStyle = col.acc; ctx.fillRect(-45, -34, 90, 18); ctx.strokeRect(-44.5, -33.5, 89, 17);
-      ctx.fillStyle = col.bg; ctx.fillRect(-36, -30, 72, 10);
-      const bx = Math.max(-30, Math.min(30, -st.th / LIM * 34));
-      ctx.fillStyle = col.ink; ctx.beginPath(); ctx.ellipse(bx, -25, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(-8, -31); ctx.lineTo(-8, -19); ctx.moveTo(8, -31); ctx.lineTo(8, -19); ctx.stroke();
-      ctx.restore();
-      ctx.globalAlpha = .15; ctx.fillStyle = col.acc;
-      if (st.L || st.pL) ctx.fillRect(0, 0, CW / 2, CH);
-      if (st.R || st.pR) ctx.fillRect(CW / 2, 0, CW / 2, CH);
-      ctx.globalAlpha = 1;
-      ctx.textAlign = 'left'; ctx.fillStyle = col.muted; ctx.font = '500 11px "IBM Plex Mono", monospace';
-      ctx.fillText('기울기 ' + (st.th * 180 / Math.PI).toFixed(1) + '° / 한계 ±' + Math.round(LIM * 180 / Math.PI) + '°', 10, 24);
-      if (!st.run && !st.over) { say2(ctx, '눌러서 시작', 110, '24px "Black Han Sans", sans-serif'); say2(ctx, '내려가는 쪽을 꾹 눌러 들어 올리세요', 132, '12px "IBM Plex Sans KR", sans-serif', col.muted); }
-      if (st.over) panel(ctx, '전도!', st.t.toFixed(1) + '초 버팀', '최고 ' + bestText('level', '초') + ' · 다시 하려면 누르세요', col.bad);
-    }
-    function setPress(e, on) { const left = pxOf(cv, e) < CW / 2; if (on) { st.pL = left; st.pR = !left; } else { st.pL = st.pR = false; } }
-    cv.addEventListener('pointerdown', e => {
-      e.preventDefault(); cv.focus(); try { cv.setPointerCapture(e.pointerId); } catch (er) {}
-      if (!st.run) { start(); return; } setPress(e, true);
-    });
-    cv.addEventListener('pointermove', e => { if (st.pL || st.pR) setPress(e, true); });
-    ['pointerup', 'pointercancel'].forEach(t => cv.addEventListener(t, e => setPress(e, false)));
-    reset(); requestAnimationFrame(frame);
-    return {
-      key(e) {
-        if (e.code === 'ArrowLeft') { e.preventDefault(); if (!st.run) start(); st.L = true; }
-        else if (e.code === 'ArrowRight') { e.preventDefault(); if (!st.run) start(); st.R = true; }
-        else if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); start(); }
-      },
-      keyup(e) { if (e.code === 'ArrowLeft') st.L = false; if (e.code === 'ArrowRight') st.R = false; },
-      leave() { if (st.run) reset(); },
-    };
-  })();
-
   // ───────── 7. 토크 조이기 ─────────
   const torque = (() => {
     const { cv, ctx } = mkCanvas('cvTorque'), elS = $('toScore'), elB = $('toBest');
@@ -1814,7 +1740,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
   })();
 
   // ───────── 게임 전환 ─────────
-  const mods = { slab, crack, memory, pour, catch: catcher, level, torque, demo, truck, drone, snake, climb, cross, react, hall: { enter() { rank.showHall(); } } };
+  const mods = { slab, crack, memory, pour, catch: catcher, torque, demo, truck, drone, snake, climb, cross, react, hall: { enter() { rank.showHall(); } } };
   function go(name) {
     if (!mods[name]) name = 'slab';
     if (current === name) return;
