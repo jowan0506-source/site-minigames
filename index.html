@@ -243,9 +243,24 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
 .card.up::before { opacity: 0; }
 .cell { border-radius: 0; }
 
-#rankList li.legend { outline: 2px solid #e0a800; outline-offset: -2px; box-shadow: 0 0 0 1px #000 inset, 0 0 14px rgba(224,168,0,.35); background: linear-gradient(90deg, rgba(224,168,0,.18), transparent 70%); }
+#rankList li { grid-template-columns: 30px minmax(0, 1fr) auto auto; }
+#rankList li.legend { position: relative; background: linear-gradient(90deg, rgba(224,168,0,.22), transparent 75%); box-shadow: 0 0 16px rgba(224,168,0,.28); }
+#rankList li.legend::before { content: ""; position: absolute; inset: 0; padding: 3px; pointer-events: none; border-radius: 2px;
+  background: linear-gradient(110deg, #8a5d00 0%, #e0a800 25%, #fff6c2 40%, #e0a800 55%, #8a5d00 75%, #e0a800 100%); background-size: 300% 100%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: goldShine 3s linear infinite; }
+#rankList li.legend-1 { background: linear-gradient(90deg, rgba(255,210,40,.32), rgba(224,168,0,.06) 80%); box-shadow: 0 0 22px rgba(255,196,0,.5); }
+#rankList li.legend-1::before { padding: 4px; animation-duration: 1.8s; }
+#rankList li.legend-1 .nm { color: #ffd84a; font-weight: 600; }
+@keyframes goldShine { to { background-position: -300% 0; } }
+@media (prefers-reduced-motion: reduce) { #rankList li.legend::before { animation: none; } }
+#rankList li.me { background: linear-gradient(90deg, rgba(70,170,255,.28), rgba(70,170,255,.05)) !important; border-left: 4px solid #46aaff !important; }
+#rankList li.me.legend { background: linear-gradient(90deg, rgba(70,170,255,.25), rgba(224,168,0,.15) 60%, transparent) !important; }
+#rankList .stars { display: inline-flex; align-items: center; gap: 1px; color: #ffc400; white-space: nowrap; line-height: 1; }
+#rankList .stars i { font-style: normal; font-size: 12px; text-shadow: 0 0 3px rgba(0,0,0,.8); }
+#rankList .stars i.big { font-size: 20px; margin-right: 2px; text-shadow: 0 0 8px rgba(255,196,0,.8), 0 0 1px #000; }
 #rankList .prev { display: inline-block; margin-left: 6px; padding: 0 5px; font: 400 10px var(--stencil, monospace); letter-spacing: .05em; color: #1a1300; background: linear-gradient(180deg, #fff1a6, #e0a800); border: 1px solid #000; border-radius: 2px; vertical-align: 1px; }
-#rankList li.hall { grid-template-columns: 30px 1fr auto; padding: 10px 2px; }
+#rankList li.hall { grid-template-columns: 30px minmax(0, 1fr) auto auto; padding: 10px 2px; }
 #rankList li.hall .trophy { font-size: 22px; text-align: center; }
 #rankList li.hall .nm { font-family: "Black Han Sans", sans-serif; font-size: 17px; color: #e0a800; }
 #rankList li.hall .sub { display: block; margin-left: 0; font-family: var(--body); font-size: 11px; }
@@ -539,21 +554,21 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       store.set(key, JSON.stringify(res)); return (weekCache[wk] = res);
     }
     let prevTop = {};   // 전주 종합 1~5등: { uid: 등수 }
-    async function loadPrev() {
-      prevTop = {};
-      if (!db || wkNow - 1 < WK0) return;
-      try { const r = await weekResult(wkNow - 1); r.top.forEach((p, i) => { prevTop[p.id] = i + 1; }); } catch (e) {}
-      render();
-    }
+    let stars = {};     // 지금까지 주간 종합 TOP5에 든 횟수: { uid: 횟수 }
     let hall = null;
-    async function loadHall() {
-      if (!db) { empty('랭킹 서버에 연결되지 않았어요.'); return; }
-      hall = [];
+    async function loadHistory() {
+      if (!db) return;
+      const pt = {}, st = {}, h = [];
       for (let wk = wkNow - 1; wk >= WK0; wk--) {
-        try { const r = await weekResult(wk); hall.push({ wk, champ: r.top[0], n: r.n }); } catch (e) {}
+        try {
+          const r = await weekResult(wk);
+          h.push({ wk, champ: r.top[0], n: r.n });
+          r.top.forEach((p, i) => { st[p.id] = (st[p.id] || 0) + 1; if (wk === wkNow - 1) pt[p.id] = i + 1; });
+        } catch (e) {}
       }
-      if (mode === 'hall') render();
+      prevTop = pt; stars = st; hall = h; render();
     }
+    const loadPrev = loadHistory, loadHall = () => { if (!hall) loadHistory(); };
 
     // ── 이번 주 전체 기록 구독 ──
     let docs = [];
@@ -574,18 +589,27 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     function rowEl(r, g) {
       const li = document.createElement('li'); const cls = [];
       if (r.id === myId) cls.push('me');
-      if (prevTop[r.id]) cls.push('legend');
+      if (prevTop[r.id]) cls.push('legend'); if (prevTop[r.id] === 1) cls.push('legend-1');
       li.className = cls.join(' ');
       const a = document.createElement('span'), rk = r.rk;
       const tier = rk <= 3 ? 'm' + rk : rk <= 10 ? 'm-top' : rk <= 20 ? 'm-good' : 'm-rest';
       a.className = 'medal ' + tier; a.textContent = rk;
       a.title = rk === 1 ? '금메달' : rk === 2 ? '은메달' : rk === 3 ? '동메달' : rk <= 10 ? '우수' : rk <= 20 ? '장려' : rk + '위';
       a.setAttribute('aria-label', rk + '등 ' + a.title);
-      const b = document.createElement('span'); b.className = 'nm'; b.textContent = r.nick + (r.id === myId ? ' (나)' : '');
+      const b = document.createElement('span'); b.className = 'nm'; b.textContent = (prevTop[r.id] === 1 ? '👑 ' : '') + r.nick + (r.id === myId ? ' (나)' : '');
       if (prevTop[r.id]) { const p = document.createElement('span'); p.className = 'prev'; p.textContent = '전주 ' + prevTop[r.id] + '위'; b.append(p); }
       if (mode === 'all') { const s = document.createElement('span'); s.className = 'sub'; s.textContent = r.n + '개 게임'; b.append(s); }
       const c = document.createElement('span'); c.className = 'fl'; c.textContent = mode === 'all' ? r.v.toLocaleString() + '점' : r.v + g.unit;
-      li.append(a, b, c); return li;
+      li.append(a, b, starEl(r.id), c); return li;
+    }
+    // 별: TOP5 1회 = 작은 별, 5개 모이면 큰 별 1개
+    function starEl(id) {
+      const n = stars[id] || 0, sp = document.createElement('span'); sp.className = 'stars';
+      if (!n) return sp;
+      sp.title = '주간 종합 TOP 5 ' + n + '회'; sp.setAttribute('aria-label', sp.title);
+      for (let i = 0; i < Math.floor(n / 5); i++) { const x = document.createElement('i'); x.className = 'big'; x.textContent = '★'; sp.append(x); }
+      for (let i = 0; i < n % 5; i++) { const x = document.createElement('i'); x.textContent = '★'; sp.append(x); }
+      return sp;
     }
     function renderHall() {
       $('rankTitle').textContent = '명예의 전당';
@@ -599,7 +623,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
         b.textContent = h.champ ? h.champ.nick + (h.champ.id === myId ? ' (나)' : '') : '기록 없음';
         const w = document.createElement('span'); w.className = 'sub'; w.textContent = weekLabel(h.wk) + ' · ' + h.n + '명 참가'; b.append(w);
         const c = document.createElement('span'); c.className = 'fl'; c.textContent = h.champ ? h.champ.t.toLocaleString() + '점' : '-';
-        li.append(a, b, c); return li;
+        li.append(a, b, starEl(h.champ ? h.champ.id : ''), c); return li;
       }));
     }
     function render() {
@@ -619,7 +643,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
         els.push(gap, rowEl(meRow, g));
       }
       const foot = document.createElement('li'); foot.className = 'empty foot';
-      foot.textContent = '참가자 ' + list.length + '명' + (meRow ? ' · 내 순위 ' + meRow.rk + '위' : '') + (Object.keys(prevTop).length ? ' · 금테두리 = 전주 종합 TOP 5' : '');
+      foot.textContent = '참가자 ' + list.length + '명' + (meRow ? ' · 내 순위 ' + meRow.rk + '위' : '') + (Object.keys(prevTop).length ? ' · 금테두리 = 전주 종합 TOP 5' : '') + (Object.keys(stars).length ? ' · ★ = 역대 TOP 5 횟수 (5개면 큰 별)' : '');
       els.push(foot);
       elList.replaceChildren(...els);
     }
