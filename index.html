@@ -177,6 +177,27 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
         <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="2" y="2" width="6" height="12" fill="currentColor"/><rect x="2" y="24" width="6" height="8" fill="currentColor"/><path d="M14 17h18" stroke="currentColor" stroke-width="2"/><rect x="19" y="15" width="8" height="6" fill="currentColor"/><path d="M12 13h6M28 13h6" stroke="currentColor" stroke-width="2"/></svg>
         <b>드론 점검</b><small>H빔 사이로 날기</small>
       </button>
+   <button class="tile" data-game="hook" type="button">
+        <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M2 4h30" stroke="currentColor" stroke-width="3"/><path d="M17 4l7 16" stroke="currentColor" stroke-width="1.5"/><path d="M21 20a3 3 0 1 0 6 0" fill="none" stroke="currentColor" stroke-width="2.5"/><rect x="5" y="26" width="14" height="4" fill="currentColor"/></svg>
+        <b>크레인 후크</b><small>흔들리는 후크로 자재 인양</small>
+      </button>
+      <button class="tile" data-game="snake" type="button">
+        <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="22" y="6" width="8" height="8" fill="currentColor"/><rect x="22" y="15" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="15" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/><rect x="4" y="15" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 28l4 4H4z" fill="currentColor"/></svg>
+        <b>레미콘 행렬</b><small>자재 실을수록 길어지기</small>
+      </button>
+      <button class="tile" data-game="climb" type="button">
+        <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="4" y="28" width="14" height="3" fill="currentColor"/><rect x="16" y="18" width="14" height="3" fill="currentColor"/><rect x="5" y="8" width="14" height="3" fill="currentColor"/><path d="M22 10a4 4 0 0 1 8 0z" fill="currentColor"/><rect x="23" y="10" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        <b>비계 오르기</b><small>발판 밟고 위로 위로</small>
+      </button>
+      <button class="tile" data-game="cross" type="button">
+        <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="0" y="9" width="34" height="7" fill="currentColor" opacity=".35"/><rect x="0" y="19" width="34" height="7" fill="currentColor" opacity=".35"/><rect x="3" y="10" width="11" height="5" fill="currentColor"/><rect x="20" y="20" width="11" height="5" fill="currentColor"/><path d="M14 31a3 3 0 0 1 6 0z" fill="currentColor"/></svg>
+        <b>현장 횡단</b><small>차량 피해 도로 건너기</small>
+      </button>
+      <button class="tile" data-game="react" type="button">
+        <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="10" y="2" width="14" height="26" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="20" r="4" fill="currentColor"/><path d="M17 28v5" stroke="currentColor" stroke-width="2"/></svg>
+        <b>신호수 반응</b><small>초록불 순간 누르기</small>
+      </button>
+
     </div>
   </nav>
 
@@ -274,6 +295,41 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
       <div class="stage"><canvas id="cvDrone" tabindex="0" aria-label="드론 점검 화면. 누르면 드론이 떠오릅니다"></canvas></div>
       <p class="hint">누를 때마다 드론이 떠올라요. 손을 놓으면 내려가요. 위아래 H빔 기둥 사이 틈으로 통과하세요. 통과할수록 틈이 좁아져요. <kbd>Space</kbd> · <kbd>↑</kbd> · 클릭 · 탭</p>
     </section>
+    <section class="game" id="g-hook" hidden>
+      <div class="game-head"><h1>크레인 후크</h1>
+        <div class="stats"><div class="stat"><small>인양 점수</small><b id="hkScore">0</b></div><div class="stat"><small>최고</small><b id="hkBest">-</b></div></div></div>
+      <div class="stage"><canvas id="cvHook" tabindex="0" aria-label="크레인 후크 화면. 누르면 후크가 내려갑니다"></canvas></div>
+      <p class="hint">흔들리는 후크가 자재를 향할 때 누르면 내려가서 건져 올려요. 무거운 자재일수록 천천히 올라오지만 점수가 높아요. 폐석은 무겁고 5점뿐이니 피하세요. 45초 동안 최대한 많이! <kbd>Space</kbd> · 클릭 · 탭</p>
+    </section>
+
+    <section class="game" id="g-snake" hidden>
+      <div class="game-head"><h1>레미콘 행렬</h1>
+        <div class="stats"><div class="stat"><small>운반한 자재</small><b id="snScore">0</b></div><div class="stat"><small>최고</small><b id="snBest">-</b></div></div></div>
+      <div class="stage"><canvas id="cvSnake" tabindex="0" aria-label="레미콘 행렬 화면. 방향키나 밀기로 방향을 바꿉니다"></canvas></div>
+      <p class="hint">라바콘을 실을 때마다 레미콘 행렬이 한 대씩 길어져요. 벽이나 자기 행렬에 부딪히면 끝나요. <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> · 화면을 밀거나, 꺾고 싶은 쪽을 탭</p>
+    </section>
+
+    <section class="game" id="g-climb" hidden>
+      <div class="game-head"><h1>비계 오르기</h1>
+        <div class="stats"><div class="stat"><small>오른 높이</small><b id="clScore">0m</b></div><div class="stat"><small>최고</small><b id="clBest">-</b></div></div></div>
+      <div class="stage"><canvas id="cvClimb" tabindex="0" aria-label="비계 오르기 화면. 왼쪽 오른쪽을 눌러 방향을 바꿉니다"></canvas></div>
+      <p class="hint">작업자가 발판을 밟을 때마다 튀어 올라요. 화면 왼쪽·오른쪽을 꾹 눌러 발판 위로 옮기세요. 화면 밖 왼쪽으로 나가면 오른쪽에서 나와요. 회색 발판은 움직여요. <kbd>←</kbd> <kbd>→</kbd></p>
+    </section>
+
+    <section class="game" id="g-cross" hidden>
+      <div class="game-head"><h1>현장 횡단</h1>
+        <div class="stats"><div class="stat"><small>횡단 성공</small><b id="crsScore">0</b></div><div class="stat"><small>최고</small><b id="crsBest">-</b></div></div></div>
+      <div class="stage"><canvas id="cvCross" tabindex="0" aria-label="현장 횡단 화면. 누를 때마다 한 칸 앞으로 갑니다"></canvas></div>
+      <p class="hint">누를 때마다 작업자가 한 칸 앞으로 가요. 트럭과 지게차 사이 틈을 노려 건너편 작업 구역까지 가세요. 건널 때마다 차가 빨라져요. <kbd>Space</kbd> · <kbd>↑</kbd> · 클릭 · 탭</p>
+    </section>
+
+    <section class="game" id="g-react" hidden>
+      <div class="game-head"><h1>신호수 반응</h1>
+        <div class="stats"><div class="stat"><small>회차</small><b id="rcRound">0/5</b></div><div class="stat"><small>평균</small><b id="rcAvg">-</b></div><div class="stat"><small>최고</small><b id="rcBest">-</b></div></div></div>
+      <div class="stage"><canvas id="cvReact" tabindex="0" aria-label="신호수 반응 화면. 초록불이 켜지면 누릅니다"></canvas></div>
+      <p class="hint">빨간불일 때 기다렸다가 초록불이 켜지는 순간 누르세요. 5회 평균 반응속도가 기록이고, 짧을수록 순위가 높아요. 미리 누르면 부정 출발로 그 회차를 다시 해요. <kbd>Space</kbd> · 클릭 · 탭</p>
+    </section>
+
     <section class="rank" aria-labelledby="rankTitle">
       <div class="rank-tabs" role="group" aria-label="랭킹 종류">
         <button type="button" id="tabGame" aria-pressed="true">이 게임 랭킹</button>
@@ -282,7 +338,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
       <div class="rank-head"><h2 id="rankTitle">랭킹 TOP 10</h2><span id="rankState">불러오는 중…</span></div>
       <details class="rank-note" id="rankNote" hidden>
         <summary>종합 점수 계산법</summary>
-        <p>게임마다 기준 기록을 100점으로 환산해 더해요(게임당 최대 100점, 10개 게임 합계 최대 1,000점). 기준보다 잘해도 100점에서 멈춰요.</p>
+        <p>게임마다 기준 기록을 100점으로 환산해 더해요(게임당 최대 100점, 15개 게임 합계 최대 1,500점). 기준보다 잘해도 100점에서 멈춰요.</p>
         <p id="refList"></p>
       </details>
       <form id="nickForm">
@@ -312,6 +368,11 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     demo:  { name: '철거 작업',   field: 'demo', unit: '개', ref: 80 },
     truck: { name: '덤프트럭 질주', field: 'truck', unit: 'm', ref: 1000 },
     drone: { name: '드론 점검',   field: 'drone', unit: '개', ref: 20 },
+    hook:  { name: '크레인 후크', field: 'hook', unit: '점', ref: 400 },
+    snake: { name: '레미콘 행렬', field: 'snake', unit: '개', ref: 30 },
+    climb: { name: '비계 오르기', field: 'climb', unit: 'm', ref: 300 },
+    cross: { name: '현장 횡단',   field: 'cross', unit: '번', ref: 15 },
+    react: { name: '신호수 반응', field: 'react', unit: 'ms', asc: true, ref: 250 },
   };
   let current = null;
 
@@ -359,7 +420,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
           rows = q.docs.map(x => { const d = x.data() || {}, s = totalOf(d); return { id: x.id, nick: String(d.nick || '익명'), v: s.t, n: s.n }; })
                        .filter(r => r.v > 0).sort((a, b) => b.v - a.v).slice(0, 20);
           const me = totalOf(mine);
-          say(inp.value.trim() ? '내 종합 ' + me.t + '점 / 1,000' : '닉네임을 저장하면 기록이 올라가요');
+          say(inp.value.trim() ? '내 종합 ' + me.t + '점 / 1,500' : '닉네임을 저장하면 기록이 올라가요');
           render();
         }, () => { clearTimeout(timer); say('랭킹을 불러오지 못했어요.'); });
         return;
@@ -1163,8 +1224,351 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     };
   })();
 
+  // ───────── 11. 크레인 후크 ─────────
+  const hook = (() => {
+    const { cv, ctx } = mkCanvas('cvHook'), elS = $('hkScore'), elB = $('hkBest');
+    elB.textContent = bestText('hook');
+    const OX = CW / 2, OY = 46, DUR = 45;
+    const TYPES = [
+      { k: 'beam', r: 16, val: 50, sp: 1.3 }, { k: 'rebar', r: 13, val: 30, sp: 2.2 },
+      { k: 'bag', r: 12, val: 20, sp: 3.0 }, { k: 'bolt', r: 7, val: 15, sp: 5.0 }, { k: 'rock', r: 18, val: 5, sp: 1.1 },
+    ];
+    let st;
+    function scatter() {
+      const items = [];
+      for (let n = 0; n < 60 && items.length < 9; n++) {
+        const t = TYPES[[0, 0, 1, 1, 1, 2, 2, 3, 3, 4][Math.floor(Math.random() * 10)]];
+        const it = { ...t, x: 24 + Math.random() * (CW - 48), y: 140 + Math.random() * (CH - 180) };
+        if (items.every(o => Math.hypot(o.x - it.x, o.y - it.y) > o.r + it.r + 10)) items.push(it);
+      }
+      return items;
+    }
+    function reset() { st = { ang: 0, t: 0, phase: 'swing', len: 22, grab: null, items: scatter(), score: 0, time: DUR, run: false, over: false, pop: 0, popTxt: '' }; elS.textContent = '0'; }
+    const tip = () => [OX + Math.sin(st.ang) * st.len, OY + Math.cos(st.ang) * st.len];
+    function fire() {
+      if (st.over) { reset(); return; }
+      if (!st.run) { st.run = true; return; }
+      if (st.phase === 'swing') st.phase = 'out';
+    }
+    function drawItem(it, x, y) {
+      ctx.strokeStyle = col.ink; ctx.lineWidth = 1;
+      if (it.k === 'beam') { ctx.fillStyle = col.ink; ctx.fillRect(x - 18, y - 9, 36, 4); ctx.fillRect(x - 18, y + 5, 36, 4); ctx.fillRect(x - 2, y - 7, 4, 14); }
+      else if (it.k === 'rebar') { ctx.strokeStyle = col.bad; ctx.lineWidth = 3; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x - 14, y + i * 5 + 3); ctx.lineTo(x + 14, y + i * 5 - 3); ctx.stroke(); } ctx.lineWidth = 1; }
+      else if (it.k === 'bag') { ctx.fillStyle = col.top; ctx.fillRect(x - 11, y - 9, 22, 18); ctx.strokeRect(x - 10.5, y - 8.5, 21, 17); ctx.fillStyle = col.ink; ctx.font = '600 7px "IBM Plex Sans KR", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('시멘트', x, y + 3); }
+      else if (it.k === 'bolt') { ctx.fillStyle = col.acc; ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; ctx[i ? 'lineTo' : 'moveTo'](x + Math.cos(a) * 7, y + Math.sin(a) * 7); } ctx.closePath(); ctx.fill(); ctx.stroke(); }
+      else { ctx.fillStyle = col.muted; ctx.beginPath(); ctx.arc(x, y, 17, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+    }
+    function frame() {
+      requestAnimationFrame(frame);
+      if (current !== 'hook') return;
+      if (st.run) {
+        st.time -= 1 / 60;
+        if (st.phase === 'swing') { st.t += 0.03; st.ang = Math.sin(st.t) * 1.2; }
+        else if (st.phase === 'out') {
+          st.len += 5.5; const [x, y] = tip();
+          const hit = st.items.find(it => Math.hypot(it.x - x, it.y - y) < it.r + 5);
+          if (hit) { st.grab = hit; st.items = st.items.filter(o => o !== hit); st.phase = 'back'; }
+          else if (x < 0 || x > CW || y > CH - 6) st.phase = 'back';
+        } else if (st.phase === 'back') {
+          st.len -= st.grab ? st.grab.sp : 7;
+          if (st.len <= 22) {
+            st.len = 22;
+            if (st.grab) { st.score += st.grab.val; elS.textContent = st.score; st.pop = 40; st.popTxt = '+' + st.grab.val; st.grab = null; }
+            st.phase = 'swing';
+            if (!st.items.length) st.items = scatter();
+          }
+        }
+        if (st.time <= 0) { st.time = 0; st.run = false; st.over = true; saveBest('hook', st.score, elB); }
+      } else if (!st.over) { st.t += 0.03; st.ang = Math.sin(st.t) * 1.2; }
+      if (st.pop) st.pop--;
+      paper(ctx);
+      ctx.fillStyle = col.muted; ctx.fillRect(0, CH - 6, CW, 6);
+      ctx.fillStyle = col.acc; ctx.fillRect(0, 30, CW, 8); ctx.strokeStyle = col.ink;
+      for (let x = 0; x < CW; x += 12) { ctx.beginPath(); ctx.moveTo(x, 38); ctx.lineTo(x + 6, 30); ctx.lineTo(x + 12, 38); ctx.stroke(); }
+      ctx.fillStyle = col.ink; ctx.fillRect(OX - 12, 36, 24, 12);
+      st.items.forEach(it => drawItem(it, it.x, it.y));
+      const [hx, hy] = tip();
+      ctx.strokeStyle = col.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(OX, OY); ctx.lineTo(hx, hy); ctx.stroke(); ctx.lineWidth = 1;
+      if (st.grab) drawItem(st.grab, hx, hy + st.grab.r * 0.6);
+      ctx.strokeStyle = col.acc; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(hx, hy + 4, 5, 0, Math.PI); ctx.stroke(); ctx.lineWidth = 1;
+      ctx.textAlign = 'left'; ctx.fillStyle = col.ink; ctx.font = '600 12px "IBM Plex Sans KR", sans-serif';
+      ctx.fillText('남은 시간 ' + Math.ceil(st.time) + '초', 8, 20);
+      ctx.textAlign = 'right'; ctx.fillStyle = col.muted; ctx.font = '500 10px "IBM Plex Mono", monospace';
+      ctx.fillText('H빔50 철근30 시멘트20 볼트15 폐석5', CW - 8, 20);
+      if (st.pop) say2(ctx, st.popTxt, 80, '22px "Black Han Sans", sans-serif');
+      if (!st.run && !st.over) { say2(ctx, '눌러서 작업 시작', 110, '22px "Black Han Sans", sans-serif'); say2(ctx, '후크가 자재를 향할 때 누르면 내려가요', 130, '12px "IBM Plex Sans KR", sans-serif', col.muted); }
+      if (st.over) panel(ctx, '작업 종료', st.score + '점 인양', '최고 ' + bestText('hook', '점') + ' · 다시 하려면 누르세요');
+    }
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.focus(); fire(); });
+    reset(); requestAnimationFrame(frame);
+    return {
+      key(e) { if (e.code === 'Space' || e.code === 'ArrowDown' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) fire(); } },
+      leave() { if (st.run) reset(); },
+    };
+  })();
+
+  // ───────── 12. 레미콘 행렬 ─────────
+  const snake = (() => {
+    const { cv, ctx } = mkCanvas('cvSnake'), elS = $('snScore'), elB = $('snBest');
+    elB.textContent = bestText('snake');
+    const C = 20, NX = CW / C, NY = CH / C;
+    let st;
+    function place() {
+      let f; do { f = { x: Math.floor(Math.random() * NX), y: 1 + Math.floor(Math.random() * (NY - 1)) }; } while (st.body.some(b => b.x === f.x && b.y === f.y));
+      st.food = f;
+    }
+    function reset() { st = { body: [{ x: 7, y: 12 }, { x: 7, y: 13 }, { x: 7, y: 14 }], dir: { x: 0, y: -1 }, nd: { x: 0, y: -1 }, tick: 0, every: 9, score: 0, run: false, over: false }; place(); elS.textContent = '0'; }
+    function turn(dx, dy) {
+      if (st.over) { reset(); return; }
+      if (!st.run) st.run = true;
+      if (dx === -st.dir.x && dy === -st.dir.y) return;
+      st.nd = { x: dx, y: dy };
+    }
+    function step() {
+      st.dir = st.nd;
+      const h = { x: st.body[0].x + st.dir.x, y: st.body[0].y + st.dir.y };
+      if (h.x < 0 || h.y < 1 || h.x >= NX || h.y >= NY || st.body.slice(0, -1).some(b => b.x === h.x && b.y === h.y)) {
+        st.run = false; st.over = true; saveBest('snake', st.score, elB); return;
+      }
+      st.body.unshift(h);
+      if (h.x === st.food.x && h.y === st.food.y) { st.score++; elS.textContent = st.score; st.every = Math.max(4, 9 - Math.floor(st.score / 4)); place(); }
+      else st.body.pop();
+    }
+    function frame() {
+      requestAnimationFrame(frame);
+      if (current !== 'snake') return;
+      if (st.run && ++st.tick >= st.every) { st.tick = 0; step(); }
+      paper(ctx);
+      ctx.fillStyle = col.muted; ctx.fillRect(0, 0, CW, C);
+      ctx.fillStyle = col.bg; ctx.font = '600 12px "IBM Plex Sans KR", sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('행렬 길이 ' + st.body.length + '대', 8, 14);
+      // 자재(라바콘)
+      const f = st.food; ctx.fillStyle = col.bad; ctx.beginPath(); ctx.moveTo(f.x * C + 10, f.y * C + 2); ctx.lineTo(f.x * C + 17, f.y * C + 18); ctx.lineTo(f.x * C + 3, f.y * C + 18); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = col.bg; ctx.fillRect(f.x * C + 6, f.y * C + 10, 8, 3);
+      st.body.slice().reverse().forEach((b, i, arr) => {
+        const head = i === arr.length - 1, x = b.x * C, y = b.y * C;
+        ctx.fillStyle = head ? col.acc : col.slab; ctx.fillRect(x + 2, y + 2, C - 4, C - 4);
+        ctx.strokeStyle = col.ink; ctx.strokeRect(x + 2.5, y + 2.5, C - 5, C - 5);
+        if (!head) { ctx.beginPath(); ctx.arc(x + C / 2, y + C / 2, 5, 0, Math.PI * 2); ctx.stroke(); }
+        else { ctx.fillStyle = col.ink; ctx.fillRect(x + C / 2 - 3 + st.dir.x * 4, y + C / 2 - 3 + st.dir.y * 4, 6, 6); }
+      });
+      if (!st.run && !st.over) { say2(ctx, '방향을 눌러서 출발', 110, '22px "Black Han Sans", sans-serif'); say2(ctx, '라바콘을 실을수록 행렬이 길어져요', 130, '12px "IBM Plex Sans KR", sans-serif', col.muted); }
+      if (st.over) panel(ctx, '정체!', '자재 ' + st.score + '개 운반', '최고 ' + bestText('snake', '개') + ' · 다시 하려면 누르세요', col.bad);
+    }
+    let sx = 0, sy = 0;
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.focus(); sx = e.clientX; sy = e.clientY; });
+    cv.addEventListener('pointerup', e => {
+      let dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.hypot(dx, dy) < 12) {   // 탭: 머리 기준으로 누른 쪽
+        const b = cv.getBoundingClientRect(), h = st.body[0];
+        dx = (e.clientX - b.left) / b.width * CW - (h.x + .5) * C; dy = (e.clientY - b.top) / b.height * CH - (h.y + .5) * C;
+        if (st.dir.x !== 0) dx = 0; else dy = 0;   // 진행 방향과 수직으로만 꺾기
+        if (!dx && !dy) { if (st.over || !st.run) turn(st.dir.x, st.dir.y); return; }
+      }
+      if (Math.abs(dx) > Math.abs(dy)) turn(Math.sign(dx), 0); else turn(0, Math.sign(dy));
+    });
+    reset(); requestAnimationFrame(frame);
+    const K = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+    return {
+      key(e) { const k = K[e.code]; if (k) { e.preventDefault(); turn(k[0], k[1]); } else if (e.code === 'Space' && st.over) { e.preventDefault(); reset(); } },
+      leave() { if (st.run) reset(); },
+    };
+  })();
+
+  // ───────── 13. 비계 오르기 ─────────
+  const climb = (() => {
+    const { cv, ctx } = mkCanvas('cvClimb'), elS = $('clScore'), elB = $('clBest');
+    elB.textContent = bestText('climb', 'm');
+    const PW = 62, BASE = 370;
+    let st;
+    function addPlat(y) {
+      const h = (BASE - y) / 10, moving = h > 80 && Math.random() < Math.min(0.5, h / 600);
+      st.plats.push({ x: Math.random() * (CW - PW), y, vx: moving ? (Math.random() < .5 ? -1 : 1) * (0.8 + Math.random()) : 0 });
+    }
+    function reset() {
+      st = { x: CW / 2, y: BASE - 14, vy: 0, plats: [{ x: 0, y: BASE, vx: 0, w: CW }], cam: 0, top: BASE, run: false, over: false, L: false, R: false, pL: false, pR: false, score: 0 };
+      let y = BASE; while (y > -60) { y -= 50 + Math.random() * 30; addPlat(y); }
+      elS.textContent = '0m';
+    }
+    function start() { if (st.over) { reset(); return; } if (!st.run) { st.run = true; st.vy = -10.2; } }
+    function frame() {
+      requestAnimationFrame(frame);
+      if (current !== 'climb') return;
+      if (st.run) {
+        const dir = ((st.R || st.pR) ? 1 : 0) - ((st.L || st.pL) ? 1 : 0);
+        st.x += dir * 4.4; if (st.x < -10) st.x = CW + 10; if (st.x > CW + 10) st.x = -10;
+        const py = st.y; st.vy += 0.38; st.y += st.vy;
+        st.plats.forEach(p => { if (p.vx) { p.x += p.vx; if (p.x < 0 || p.x > CW - PW) p.vx *= -1; } });
+        if (st.vy > 0) for (const p of st.plats) {
+          const w = p.w || PW;
+          if (py + 14 <= p.y && st.y + 14 >= p.y && st.x > p.x - 8 && st.x < p.x + w + 8) { st.y = p.y - 14; st.vy = -10.2; break; }
+        }
+        if (st.y - st.cam < 160) st.cam = st.y - 160;
+        st.score = Math.max(st.score, Math.floor((BASE - 14 - st.y) / 10)); elS.textContent = st.score + 'm';
+        let topY = Math.min(...st.plats.map(p => p.y));
+        while (topY > st.cam - 60) { const gap = 50 + Math.random() * (30 + Math.min(40, st.score / 10)); topY -= gap; addPlat(topY); }
+        st.plats = st.plats.filter(p => p.y - st.cam < CH + 30);
+        if (st.y - st.cam > CH + 20) { st.run = false; st.over = true; saveBest('climb', st.score, elB, 'm'); }
+      }
+      paper(ctx);
+      ctx.save(); ctx.translate(0, -st.cam);
+      // 비계 기둥(배경)
+      ctx.strokeStyle = col.grid; ctx.lineWidth = 4;
+      [40, 260].forEach(x => { ctx.beginPath(); ctx.moveTo(x, st.cam); ctx.lineTo(x, st.cam + CH); ctx.stroke(); });
+      ctx.lineWidth = 1;
+      st.plats.forEach(p => {
+        const w = p.w || PW;
+        if (p.w) { ctx.fillStyle = col.muted; ctx.fillRect(0, p.y, CW, CH); return; }
+        ctx.fillStyle = p.vx ? col.top : col.acc; ctx.fillRect(p.x, p.y, w, 7);
+        ctx.strokeStyle = col.ink; ctx.strokeRect(p.x + .5, p.y + .5, w - 1, 6);
+        ctx.beginPath(); ctx.moveTo(p.x + 8, p.y + 7); ctx.lineTo(p.x + 8, p.y + 14); ctx.moveTo(p.x + w - 8, p.y + 7); ctx.lineTo(p.x + w - 8, p.y + 14); ctx.stroke();
+      });
+      // 작업자
+      const x = st.x, y = st.y;
+      ctx.fillStyle = col.ink; ctx.fillRect(x - 6, y - 4, 12, 14);
+      ctx.fillStyle = col.acc; ctx.beginPath(); ctx.arc(x, y - 5, 7, Math.PI, 0); ctx.fill(); ctx.fillRect(x - 9, y - 6, 18, 2);
+      ctx.fillStyle = col.bad; ctx.fillRect(x - 6, y + 2, 12, 3);
+      ctx.restore();
+      if (!st.run && !st.over) { say2(ctx, '눌러서 오르기 시작', 110, '22px "Black Han Sans", sans-serif'); say2(ctx, '화면 왼쪽·오른쪽을 꾹 눌러 방향을 바꿔요', 130, '12px "IBM Plex Sans KR", sans-serif', col.muted); }
+      if (st.over) panel(ctx, '추락!', st.score + 'm 올라감', '최고 ' + bestText('climb', 'm') + ' · 다시 하려면 누르세요', col.bad);
+    }
+    function setPress(e, on) { const left = pxOf(cv, e) < CW / 2; st.pL = on && left; st.pR = on && !left; }
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.focus(); try { cv.setPointerCapture(e.pointerId); } catch (er) {} if (!st.run) { start(); return; } setPress(e, true); });
+    cv.addEventListener('pointermove', e => { if (st.pL || st.pR) setPress(e, true); });
+    ['pointerup', 'pointercancel'].forEach(t => cv.addEventListener(t, e => setPress(e, false)));
+    reset(); requestAnimationFrame(frame);
+    return {
+      key(e) {
+        if (e.code === 'ArrowLeft') { e.preventDefault(); st.L = true; if (!st.run) start(); }
+        else if (e.code === 'ArrowRight') { e.preventDefault(); st.R = true; if (!st.run) start(); }
+        else if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) start(); }
+      },
+      keyup(e) { if (e.code === 'ArrowLeft') st.L = false; if (e.code === 'ArrowRight') st.R = false; },
+      leave() { if (st.run) reset(); st.L = st.R = st.pL = st.pR = false; },
+    };
+  })();
+
+  // ───────── 14. 현장 횡단 ─────────
+  const cross = (() => {
+    const { cv, ctx } = mkCanvas('cvCross'), elS = $('crsScore'), elB = $('crsBest');
+    elB.textContent = bestText('cross');
+    const LANES = 6, rowY = r => 350 - r * 44, WX = CW / 2;
+    let st;
+    function makeLanes() {
+      st.lanes = [];
+      for (let i = 1; i <= LANES; i++) {
+        const dir = i % 2 ? 1 : -1, sp = (0.9 + Math.random() * 1.1 + st.level * 0.25) * dir;
+        const n = 2 + (Math.random() < .5 ? 1 : 0), cars = [];
+        const span = CW + 120;
+        for (let k = 0; k < n; k++) { const w = 40 + Math.random() * 36; cars.push({ x: k * span / n + Math.random() * 30 - 60, w, fork: Math.random() < .35 }); }
+        st.lanes.push({ sp, cars });
+      }
+    }
+    function reset() { st = { row: 0, score: 0, level: 0, run: false, over: false, hop: 0, flash: 0 }; makeLanes(); elS.textContent = '0'; }
+    function go() {
+      if (st.over) { reset(); return; }
+      if (!st.run) { st.run = true; return; }
+      st.row++; st.hop = 6;
+      if (st.row > LANES) { st.score++; elS.textContent = st.score; st.level++; st.row = 0; st.flash = 40; makeLanes(); }
+    }
+    function frame() {
+      requestAnimationFrame(frame);
+      if (current !== 'cross') return;
+      st.lanes.forEach(l => l.cars.forEach(c => {
+        c.x += l.sp * (st.run || !st.over ? 1 : 0);
+        if (l.sp > 0 && c.x > CW + 20) c.x = -c.w - 20 - Math.random() * 40;
+        if (l.sp < 0 && c.x + c.w < -20) c.x = CW + 20 + Math.random() * 40;
+      }));
+      if (st.hop) st.hop--; if (st.flash) st.flash--;
+      if (st.run && st.row >= 1 && st.row <= LANES) {
+        const l = st.lanes[st.row - 1];
+        if (l.cars.some(c => WX + 8 > c.x + 3 && WX - 8 < c.x + c.w - 3)) { st.run = false; st.over = true; saveBest('cross', st.score, elB); }
+      }
+      paper(ctx);
+      // 안전구역
+      ctx.fillStyle = col.good; ctx.globalAlpha = .25; ctx.fillRect(0, rowY(0) - 20, CW, 40); ctx.fillRect(0, rowY(LANES + 1) - 20, CW, 40); ctx.globalAlpha = 1;
+      ctx.fillStyle = col.ink; ctx.font = '600 11px "IBM Plex Sans KR", sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('대기 구역', 8, rowY(0) + 4); ctx.fillText('작업 구역 (도착)', 8, rowY(LANES + 1) + 4);
+      for (let i = 1; i <= LANES; i++) {
+        const y = rowY(i); ctx.fillStyle = col.muted; ctx.fillRect(0, y - 20, CW, 40);
+        ctx.strokeStyle = col.bg; ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.moveTo(0, y + 20); ctx.lineTo(CW, y + 20); ctx.stroke(); ctx.setLineDash([]);
+        const l = st.lanes[i - 1];
+        l.cars.forEach(c => {
+          ctx.fillStyle = c.fork ? col.bad : col.acc; ctx.fillRect(c.x, y - 12, c.w, 22);
+          ctx.strokeStyle = col.ink; ctx.strokeRect(c.x + .5, y - 11.5, c.w - 1, 21);
+          const cab = l.sp > 0 ? c.x + c.w - 14 : c.x + 2; ctx.fillStyle = col.bg; ctx.fillRect(cab, y - 8, 12, 9);
+          if (c.fork) { ctx.fillStyle = col.ink; ctx.fillRect(l.sp > 0 ? c.x + c.w : c.x - 8, y + 4, 8, 3); }
+        });
+      }
+      // 작업자
+      const y = rowY(st.row) - (st.hop ? 4 : 0);
+      ctx.fillStyle = col.ink; ctx.fillRect(WX - 6, y - 4, 12, 14);
+      ctx.fillStyle = col.acc; ctx.beginPath(); ctx.arc(WX, y - 5, 7, Math.PI, 0); ctx.fill(); ctx.fillRect(WX - 9, y - 6, 18, 2);
+      ctx.fillStyle = col.bad; ctx.fillRect(WX - 6, y + 2, 12, 3);
+      if (st.flash) say2(ctx, '횡단 성공! 차가 빨라져요', 17, '16px "Black Han Sans", sans-serif');
+      if (!st.run && !st.over) { say2(ctx, '눌러서 시작', 17, '16px "Black Han Sans", sans-serif'); }
+      if (st.over) panel(ctx, '사고!', st.score + '번 횡단', '최고 ' + bestText('cross', '번') + ' · 다시 하려면 누르세요', col.bad);
+    }
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.focus(); go(); });
+    reset(); requestAnimationFrame(frame);
+    return {
+      key(e) { if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) go(); } },
+      leave() { if (st.run) reset(); },
+    };
+  })();
+
+  // ───────── 15. 신호수 반응 ─────────
+  const react = (() => {
+    const { cv, ctx } = mkCanvas('cvReact'), elR = $('rcRound'), elA = $('rcAvg'), elB = $('rcBest');
+    elB.textContent = bestText('react', 'ms');
+    const ROUNDS = 5;
+    let st;
+    function reset() { st = { phase: 'idle', times: [], tGo: 0, msg: '', showUntil: 0, avg: 0 }; elR.textContent = '0/' + ROUNDS; elA.textContent = '-'; }
+    function wait() { st.phase = 'wait'; st.tGo = performance.now() + 1200 + Math.random() * 2600; }
+    function tap() {
+      const now = performance.now();
+      if (st.phase === 'idle' || st.phase === 'done') { reset(); wait(); return; }
+      if (st.phase === 'wait') { st.phase = 'show'; st.msg = '부정 출발! 다시'; st.bad = true; st.showUntil = now + 900; return; }
+      if (st.phase === 'go') {
+        const ms = Math.round(now - st.tGo); st.times.push(ms); st.bad = false;
+        st.msg = ms + 'ms'; st.phase = 'show'; st.showUntil = now + 900;
+        elR.textContent = st.times.length + '/' + ROUNDS;
+        elA.textContent = Math.round(st.times.reduce((a, b) => a + b, 0) / st.times.length) + 'ms';
+      }
+    }
+    function frame() {
+      requestAnimationFrame(frame);
+      if (current !== 'react') return;
+      const now = performance.now();
+      if (st.phase === 'wait' && now >= st.tGo) st.phase = 'go';
+      if (st.phase === 'show' && now >= st.showUntil) {
+        if (st.times.length >= ROUNDS) { st.avg = Math.round(st.times.reduce((a, b) => a + b, 0) / ROUNDS); st.phase = 'done'; saveBest('react', st.avg, elB, 'ms'); }
+        else wait();
+      }
+      paper(ctx);
+      // 신호등
+      ctx.fillStyle = col.ink; ctx.fillRect(CW / 2 - 45, 70, 90, 170); ctx.fillRect(CW / 2 - 4, 240, 8, 120);
+      const red = st.phase === 'wait' || st.phase === 'idle', green = st.phase === 'go';
+      ctx.globalAlpha = red ? 1 : .2; ctx.fillStyle = col.bad; ctx.beginPath(); ctx.arc(CW / 2, 115, 30, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = green ? 1 : .2; ctx.fillStyle = col.good; ctx.beginPath(); ctx.arc(CW / 2, 195, 30, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = col.muted; ctx.fillRect(0, 360, CW, 40);
+      const label = { idle: '눌러서 시작', wait: '정지… 초록불을 기다리세요', go: '지금 누르세요!', show: st.msg, done: '' }[st.phase];
+      say2(ctx, label, 40, '20px "Black Han Sans", sans-serif', st.phase === 'show' && st.bad ? col.bad : col.ink);
+      if (st.phase === 'idle') say2(ctx, '초록불이 켜지는 순간 누르세요 · 5회 평균', 290, '12px "IBM Plex Sans KR", sans-serif', col.muted);
+      if (st.times.length && st.phase !== 'done') say2(ctx, st.times.map(t => t + 'ms').join(' · '), 300, '500 11px "IBM Plex Mono", monospace', col.muted);
+      if (st.phase === 'done') panel(ctx, '평균 ' + st.avg + 'ms', st.times.join(' · ') + ' ms', '최고 ' + bestText('react', 'ms') + ' · 다시 하려면 누르세요');
+    }
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.focus(); tap(); });
+    reset(); requestAnimationFrame(frame);
+    return {
+      key(e) { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) tap(); } },
+      leave() { if (st.phase !== 'done') reset(); },
+    };
+  })();
+
   // ───────── 게임 전환 ─────────
-  const mods = { slab, crack, memory, pour, catch: catcher, level, torque, demo, truck, drone };
+  const mods = { slab, crack, memory, pour, catch: catcher, level, torque, demo, truck, drone, hook, snake, climb, cross, react };
   function go(name) {
     if (!GAMES[name]) name = 'slab';
     if (current === name) return;
