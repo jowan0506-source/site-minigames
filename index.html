@@ -97,8 +97,18 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
 #nickForm button { font: 600 13px var(--body); padding: 7px 12px; border: 2px solid var(--ink); border-radius: 3px; background: var(--accent); color: #1d2733; cursor: pointer; }
 #nick:focus-visible, #nickForm button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 #rankList { list-style: none; margin: 0; padding: 0; font-variant-numeric: tabular-nums; }
-#rankList li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 8px; padding: 6px 2px; border-bottom: 1px dashed var(--grid); align-items: baseline; }
-#rankList .no { font-family: var(--mono); color: var(--muted); }
+#rankList li { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; padding: 6px 2px; border-bottom: 1px dashed var(--grid); align-items: center; }
+/* 메달: 1~3 금은동, 4~10 우수(노랑 테두리), 11~20 장려(회색 테두리) */
+.medal { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  font: 600 12px var(--mono); position: relative; }
+.medal.m1 { background: radial-gradient(circle at 35% 30%, #fff3b0, #e0a800 60%, #a87600); color: #3a2a00; box-shadow: 0 0 0 2px #a87600; }
+.medal.m2 { background: radial-gradient(circle at 35% 30%, #ffffff, #b9c2cc 60%, #7d8894); color: #22303d; box-shadow: 0 0 0 2px #7d8894; }
+.medal.m3 { background: radial-gradient(circle at 35% 30%, #ffd2a8, #c27a3e 60%, #8a4f22); color: #2e1606; box-shadow: 0 0 0 2px #8a4f22; }
+.medal.m1::before, .medal.m2::before, .medal.m3::before { content: ""; position: absolute; top: -7px; left: 50%; width: 12px; height: 7px; transform: translateX(-50%);
+  background: linear-gradient(90deg, #c8412b 0 50%, #2f6fb5 50%); clip-path: polygon(0 0, 100% 0, 75% 100%, 25% 100%); }
+.medal.m-top { border: 2px solid var(--accent); color: var(--ink); background: color-mix(in srgb, var(--accent) 15%, transparent); }
+.medal.m-good { border: 1.5px solid var(--muted); color: var(--muted); }
+#rankList li:has(.m1) .fl, #rankList li:has(.m1) .nm { font-weight: 600; }
 #rankList .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #rankList .fl { font-family: var(--mono); font-weight: 500; }
 #rankList li.me { background: color-mix(in srgb, var(--accent) 22%, transparent); }
@@ -397,12 +407,18 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
     function render() {
       const g = GAMES[current]; if (!g) return;
       $('tabGame').textContent = g.name + ' 랭킹';
-      $('rankTitle').textContent = mode === 'all' ? '종합 순위 TOP 20' : g.name + ' 랭킹 TOP 10';
+      $('rankTitle').textContent = mode === 'all' ? '종합 순위 TOP 20' : g.name + ' 랭킹 TOP 20';
       if (!ready) return;
       if (!rows.length) { empty('아직 기록이 없어요. 닉네임을 저장하고 첫 기록을 올려 보세요.'); return; }
+      let rk = 0;
       elList.replaceChildren(...rows.map((r, k) => {
+        if (k === 0 || r.v !== rows[k - 1].v) rk = k + 1;   // 같은 점수는 같은 등수
         const li = document.createElement('li'); if (r.id === myId) li.className = 'me';
-        const a = document.createElement('span'); a.className = 'no'; a.textContent = (k + 1) + '.';
+        const a = document.createElement('span');
+        const tier = rk <= 3 ? 'm' + rk : rk <= 10 ? 'm-top' : 'm-good';
+        a.className = 'medal ' + tier; a.textContent = rk;
+        a.title = rk === 1 ? '금메달' : rk === 2 ? '은메달' : rk === 3 ? '동메달' : rk <= 10 ? '우수' : '장려';
+        a.setAttribute('aria-label', rk + '등 ' + a.title);
         const b = document.createElement('span'); b.className = 'nm'; b.textContent = r.nick + (r.id === myId ? ' (나)' : '');
         if (mode === 'all') { const s = document.createElement('span'); s.className = 'sub'; s.textContent = r.n + '개 게임'; b.append(s); }
         const c = document.createElement('span'); c.className = 'fl'; c.textContent = mode === 'all' ? r.v.toLocaleString() + '점' : r.v + g.unit;
@@ -425,7 +441,7 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
         }, () => { clearTimeout(timer); say('랭킹을 불러오지 못했어요.'); });
         return;
       }
-      unsub = db.collection('scores').orderBy(g.field, g.asc ? 'asc' : 'desc').limit(10).onSnapshot(q => {
+      unsub = db.collection('scores').orderBy(g.field, g.asc ? 'asc' : 'desc').limit(20).onSnapshot(q => {
         clearTimeout(timer); ready = true;
         rows = q.docs.map(x => { const d = x.data() || {}; return { id: x.id, nick: String(d.nick || '익명'), v: +d[g.field] || 0 }; })
                      .filter(r => r.v > 0);
