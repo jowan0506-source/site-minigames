@@ -550,28 +550,30 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     const say = t => { elState.textContent = t; };
     const empty = t => { const li = document.createElement('li'); li.className = 'empty'; li.textContent = t; elList.replaceChildren(li); };
     let mode = 'game';
-    // 종합 점수: 그 주 각 게임 1등 기록 = 100점, 나머지는 1등 대비 비율. 잘한 게임 TOPN개만 합산.
+    // 종합 점수: 게임마다 그 주 1등 100점 · 2등 95점 · 3등 90점, 4등부터는 3등 기록 대비 비율 × 90점.
+    // 동점은 같은 등수. 잘한 게임 TOPN개만 합산.
     const TOPN = 8, MAX = TOPN * 100;
     function totals(list) {   // list: [{ id, nick, data }] → { id: { t, n } }
-      const best = {};
+      const per = {};
       for (const k in GAMES) {
-        const g = GAMES[k], vs = list.map(d => +d.data[g.field]).filter(v => v > 0);
-        if (vs.length) best[k] = g.asc ? Math.min(...vs) : Math.max(...vs);
+        const g = GAMES[k], vs = list.map(d => +d.data[g.field]).filter(v => v > 0).sort((a, b) => g.asc ? a - b : b - a);
+        if (vs.length) per[k] = { vs, third: vs[Math.min(2, vs.length - 1)] };
       }
+      const gamePts = (k, v) => {
+        const g = GAMES[k], p = per[k], rk = 1 + p.vs.filter(x => g.asc ? x < v : x > v).length;
+        if (rk === 1) return 100; if (rk === 2) return 95; if (rk === 3) return 90;
+        return Math.round(90 * (g.asc ? p.third / v : v / p.third));
+      };
       const out = {};
       list.forEach(d => {
         const ps = [];
-        for (const k in best) {
-          const g = GAMES[k], v = +d.data[g.field];
-          if (v > 0) ps.push(Math.round((g.asc ? best[k] / v : v / best[k]) * 100));
-        }
+        for (const k in per) { const v = +d.data[GAMES[k].field]; if (v > 0) ps.push(gamePts(k, v)); }
         ps.sort((a, b) => b - a);
         out[d.id] = { t: ps.slice(0, TOPN).reduce((a, b) => a + b, 0), n: ps.length };
       });
       return out;
-    }
-    $('refHead').textContent = '게임마다 그 주 1등 기록을 100점으로 놓고, 내 기록을 1등 대비 비율로 점수를 매겨요(예: 1등 80층, 내가 60층이면 75점). 짝맞추기·신호수 반응은 빠를수록 좋아서 비율을 거꾸로 계산해요.';
-    $('refList').textContent = '점수가 높은 ' + TOPN + '개 게임만 더해요(최대 ' + MAX.toLocaleString() + '점). 그래서 모든 게임을 다 할 필요는 없지만, 여러 게임에서 1등에 가까울수록 유리해요. 1등 기록이 바뀌면 다른 사람 점수도 실시간으로 바뀌어요.';
+    }    $('refHead').textContent = '게임마다 그 주 등수로 점수를 매겨요. 1등 100점 · 2등 95점 · 3등 90점, 4등부터는 3등 기록 대비 비율 × 90점(예: 3등 80층, 내가 60층이면 68점). 동점은 같은 등수예요. 짝맞추기·신호수 반응은 빠를수록 좋아서 비율을 거꾸로 계산해요.';
+    $('refList').textContent = '점수가 높은 ' + TOPN + '개 게임만 더해요(최대 ' + MAX.toLocaleString() + '점). 그래서 모든 게임을 다 할 필요는 없지만, 여러 게임에서 1등에 가까울수록 유리해요. 상위 3명 기록이 바뀌면 다른 사람 점수도 실시간으로 바뀌어요.';
     function setMode(m) {
       mode = m;
       $('tabGame').setAttribute('aria-pressed', m === 'game'); $('tabAll').setAttribute('aria-pressed', m === 'all');
@@ -584,7 +586,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     const weekCache = {};
     async function weekResult(wk) {
       if (weekCache[wk]) return weekCache[wk];
-      const key = 'wres3_' + wk;
+      const key = 'wres4_' + wk;
       try { const c = JSON.parse(store.get(key, 'null')); if (c) return (weekCache[wk] = c); } catch (e) {}
       const q = await db.collection(weekPath(wk)).limit(2000).get();
       const raw = q.docs.map(x => ({ id: x.id, nick: String((x.data() || {}).nick || '익명'), data: x.data() || {} })), tt = totals(raw);
