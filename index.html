@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>*,*::before,*::after{box-sizing:border-box}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}</style><title>현장 미니게임</title>
 
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Saira+Stencil+One&family=IBM+Plex+Sans+KR:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 /* Layout: left rail of game tiles (stacks on top at phone width), the active game beside it, its ranking underneath */
 :root {
@@ -146,6 +146,103 @@ canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; 
   .stat b { font-size: 18px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* ───────── 현장 스킨: 아스팔트 · 안전 줄무늬 · 강판 · 스텐실 (한 가지 어두운 테마로 고정) ───────── */
+:root:not(#_), :root:not(#_)[data-theme] {
+  --bg: #1b1d20; --panel: #2b2f34; --ink: #efe8d6; --muted: #9a9384; --grid: #26292d;
+  --slab: #80848a; --slab-top: #a9acb0; --accent: #ffc400; --bad: #e5482c; --good: #48b863;
+  --steel-hi: #3a3f45; --steel-lo: #202326; --rivet: #767b82; --black: #0e0f11;
+  --hazard: repeating-linear-gradient(-45deg, var(--accent) 0 10px, var(--black) 10px 20px);
+  --stencil: "Saira Stencil One", "Black Han Sans", Impact, sans-serif;
+  color-scheme: dark;
+}
+body {
+  background:
+    radial-gradient(rgba(255,255,255,.035) 1px, transparent 1.2px) 0 0 / 5px 5px,
+    radial-gradient(rgba(0,0,0,.35) 1px, transparent 1.4px) 2px 3px / 7px 7px,
+    linear-gradient(180deg, #1f2124, #17191b) fixed;
+  background-color: var(--bg);
+}
+/* 상단 안전 테이프 */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: calc(8px + env(safe-area-inset-top, 0px)); background: var(--hazard); z-index: 20; box-shadow: 0 2px 0 var(--black); }
+.app { padding-top: 26px; }
+
+/* 브랜드 */
+.brand { font-size: 26px; color: var(--accent); letter-spacing: .03em; text-shadow: 2px 2px 0 var(--black), 3px 3px 0 rgba(0,0,0,.4); }
+.brand::after { content: "SITE 15 · 안전제일"; display: block; margin-top: 4px; font: 400 11px var(--stencil); letter-spacing: .25em; color: var(--muted); text-shadow: none; }
+
+/* 강판 타일 + 리벳 */
+.tile {
+  border: 2px solid var(--black); border-radius: 2px; color: var(--ink);
+  background:
+    radial-gradient(circle at 7px 7px, var(--rivet) 2px, transparent 2.6px),
+    radial-gradient(circle at calc(100% - 7px) 7px, var(--rivet) 2px, transparent 2.6px),
+    radial-gradient(circle at 7px calc(100% - 7px), var(--rivet) 2px, transparent 2.6px),
+    radial-gradient(circle at calc(100% - 7px) calc(100% - 7px), var(--rivet) 2px, transparent 2.6px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, var(--steel-hi), var(--steel-lo));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 3px 0 var(--black);
+  transition: transform .08s, box-shadow .08s;
+}
+.tile:hover { border-color: var(--accent); }
+.tile:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 1px 0 var(--black); }
+.tile b { letter-spacing: .02em; }
+.tile[aria-current="true"] {
+  color: var(--black); border-color: var(--black);
+  background: linear-gradient(90deg, transparent 0 9px, var(--accent) 9px), var(--hazard);
+  box-shadow: 0 3px 0 var(--black), 0 0 0 2px var(--accent);
+}
+.tile[aria-current="true"] small { color: #3a3000; }
+
+/* 제목 · 숫자 */
+h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em; }
+.stat b { font-family: var(--stencil); font-size: 24px; color: var(--accent); letter-spacing: .03em; text-shadow: 1px 1px 0 var(--black); }
+.stat small { letter-spacing: .12em; }
+
+/* 게임 화면: 안전 테이프 테두리 */
+.stage { border: 7px solid transparent; border-image: var(--hazard) 7; border-radius: 0; box-shadow: 0 0 0 2px var(--black), 0 8px 0 rgba(0,0,0,.35); }
+.stage:focus-within { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+/* 안내문: 현장 게시판 쪽지 */
+.hint { background: rgba(0,0,0,.28); border-left: 5px solid var(--accent); padding: 8px 10px; color: var(--muted); }
+.hint kbd { border-color: var(--accent); color: var(--accent); font-family: var(--stencil); }
+
+/* 버튼: 두껍게, 눌리는 느낌 */
+.btn, #nickForm button, .so-btn {
+  background: var(--accent); color: var(--black); border: 3px solid var(--black); border-radius: 2px;
+  box-shadow: 0 4px 0 var(--black); font-family: "Black Han Sans", sans-serif; font-weight: 400; letter-spacing: .04em;
+  transition: transform .06s, box-shadow .06s;
+}
+.btn:active, #nickForm button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--black); }
+#nick { background: var(--black); border: 2px solid #4a4e54; color: var(--ink); border-radius: 2px; font-family: var(--mono); }
+#nick:focus-visible { border-color: var(--accent); }
+
+/* 랭킹: 안전 테이프 구분선 + 강판 탭 */
+.rank { border-top: 0; position: relative; padding-top: 18px; }
+.rank::before { content: ""; position: absolute; inset: 0 0 auto; height: 8px; background: var(--hazard); box-shadow: 0 2px 0 var(--black); }
+.rank h2 { color: var(--accent); text-shadow: 2px 2px 0 var(--black); }
+.rank-tabs { border: 3px solid var(--black); border-radius: 2px; box-shadow: 0 3px 0 var(--black); }
+.rank-tabs button { background: linear-gradient(180deg, var(--steel-hi), var(--steel-lo)); font-family: "Black Han Sans", sans-serif; font-weight: 400; letter-spacing: .04em; }
+.rank-tabs button[aria-pressed="true"] { background: var(--accent); color: var(--black); }
+#rankList li { border-bottom: 1px solid rgba(255,255,255,.06); }
+#rankList .fl { font-family: var(--stencil); font-size: 16px; color: var(--ink); }
+#rankList li.me { background: linear-gradient(90deg, rgba(255,196,0,.28), rgba(255,196,0,.06)); border-left: 4px solid var(--accent); }
+
+/* 오버레이(게임 시작·종료 안내) */
+.overlay { background: rgba(14,15,17,.86); }
+.overlay h2 { color: var(--accent); text-shadow: 3px 3px 0 var(--black); font-size: 32px; }
+
+/* 접속자 배지 */
+.live { background: var(--black); border: 1px solid #3a3e44; padding: 4px 8px; width: fit-content; border-radius: 2px; }
+.live b { color: var(--good); font-family: var(--stencil); }
+
+/* 카드 뒷면: 콘크리트 + 안전 줄무늬 */
+.card { border: 2px solid var(--black); border-radius: 2px;
+  background: radial-gradient(rgba(0,0,0,.18) 1px, transparent 1.5px) 0 0 / 6px 6px, linear-gradient(180deg, var(--slab-top), var(--slab)); box-shadow: inset 0 0 0 3px rgba(255,196,0,.0), 0 2px 0 var(--black); }
+.card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: var(--hazard); opacity: .9; }
+.card.up { background: var(--panel); }
+.card.up::before { opacity: 0; }
+.cell { border-radius: 0; }
+
 </style>
 
 </head>
