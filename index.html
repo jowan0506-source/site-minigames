@@ -550,12 +550,28 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     const say = t => { elState.textContent = t; };
     const empty = t => { const li = document.createElement('li'); li.className = 'empty'; li.textContent = t; elList.replaceChildren(li); };
     let mode = 'game';
-    const MAX = Object.keys(GAMES).length * 100;
-    // 종합 점수: 게임별 기준 기록 = 100점, 최대 100점
-    const pts = (k, v) => { const g = GAMES[k]; v = +v; if (!(v > 0)) return 0; return Math.min(100, Math.round((g.asc ? g.ref / v : v / g.ref) * 100)); };
-    const totalOf = d => { let t = 0, n = 0; for (const k in GAMES) { const p = pts(k, d[GAMES[k].field]); if (p > 0) { t += p; n++; } } return { t, n }; };
-    $('refHead').textContent = '게임마다 기준 기록을 100점으로 환산해 더해요(게임당 최대 100점, ' + Object.keys(GAMES).length + '개 게임 합계 최대 ' + MAX.toLocaleString() + '점). 기준보다 잘해도 100점에서 멈춰요.';
-    $('refList').textContent = Object.values(GAMES).map(g => g.name + ' ' + g.ref + g.unit + (g.asc ? '(이하)' : '')).join(' · ');
+    // 종합 점수: 그 주 각 게임 1등 기록 = 100점, 나머지는 1등 대비 비율. 잘한 게임 TOPN개만 합산.
+    const TOPN = 8, MAX = TOPN * 100;
+    function totals(list) {   // list: [{ id, nick, data }] → { id: { t, n } }
+      const best = {};
+      for (const k in GAMES) {
+        const g = GAMES[k], vs = list.map(d => +d.data[g.field]).filter(v => v > 0);
+        if (vs.length) best[k] = g.asc ? Math.min(...vs) : Math.max(...vs);
+      }
+      const out = {};
+      list.forEach(d => {
+        const ps = [];
+        for (const k in best) {
+          const g = GAMES[k], v = +d.data[g.field];
+          if (v > 0) ps.push(Math.round((g.asc ? best[k] / v : v / best[k]) * 100));
+        }
+        ps.sort((a, b) => b - a);
+        out[d.id] = { t: ps.slice(0, TOPN).reduce((a, b) => a + b, 0), n: ps.length };
+      });
+      return out;
+    }
+    $('refHead').textContent = '게임마다 그 주 1등 기록을 100점으로 놓고, 내 기록을 1등 대비 비율로 점수를 매겨요(예: 1등 80층, 내가 60층이면 75점). 짝맞추기·신호수 반응은 빠를수록 좋아서 비율을 거꾸로 계산해요.';
+    $('refList').textContent = '점수가 높은 ' + TOPN + '개 게임만 더해요(최대 ' + MAX.toLocaleString() + '점). 그래서 모든 게임을 다 할 필요는 없지만, 여러 게임에서 1등에 가까울수록 유리해요. 1등 기록이 바뀌면 다른 사람 점수도 실시간으로 바뀌어요.';
     function setMode(m) {
       mode = m;
       $('tabGame').setAttribute('aria-pressed', m === 'game'); $('tabAll').setAttribute('aria-pressed', m === 'all');
@@ -568,11 +584,11 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     const weekCache = {};
     async function weekResult(wk) {
       if (weekCache[wk]) return weekCache[wk];
-      const key = 'wres2_' + wk;
+      const key = 'wres3_' + wk;
       try { const c = JSON.parse(store.get(key, 'null')); if (c) return (weekCache[wk] = c); } catch (e) {}
       const q = await db.collection(weekPath(wk)).limit(2000).get();
-      const list = q.docs.map(x => { const d = x.data() || {}; return { id: x.id, nick: String(d.nick || '익명'), t: totalOf(d).t }; })
-                         .filter(r => r.t > 0).sort((a, b) => b.t - a.t);
+      const raw = q.docs.map(x => ({ id: x.id, nick: String((x.data() || {}).nick || '익명'), data: x.data() || {} })), tt = totals(raw);
+      const list = raw.map(d => ({ id: d.id, nick: d.nick, t: tt[d.id].t })).filter(r => r.t > 0).sort((a, b) => b.t - a.t);
       const res = { top: list.slice(0, 5), n: list.length };
       store.set(key, JSON.stringify(res)); return (weekCache[wk] = res);
     }
@@ -600,7 +616,8 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       const g = GAMES[current];
       let list;
       if (mode === 'all') {
-        list = docs.map(d => { const s = totalOf(d.data); return { id: d.id, nick: d.nick, v: s.t, n: s.n }; }).filter(r => r.v > 0)
+        const tt = totals(docs);
+        list = docs.map(d => ({ id: d.id, nick: d.nick, v: tt[d.id].t, n: tt[d.id].n })).filter(r => r.v > 0)
                    .sort((a, b) => b.v - a.v);
       } else {
         list = docs.map(d => ({ id: d.id, nick: d.nick, v: +d.data[g.field] || 0 })).filter(r => r.v > 0)
@@ -622,7 +639,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       a.setAttribute('aria-label', rk + '등 ' + a.title);
       const b = document.createElement('span'); b.className = 'nm'; b.textContent = (prevTop[r.id] === 1 ? '👑 ' : '') + r.nick + (r.id === myId ? ' (나)' : '');
       if (prevTop[r.id]) { const p = document.createElement('span'); p.className = 'prev'; p.textContent = '전주 ' + prevTop[r.id] + '위'; b.append(p); }
-      if (mode === 'all') { const s = document.createElement('span'); s.className = 'sub'; s.textContent = r.n + '개 게임'; b.append(s); }
+      if (mode === 'all') { const s = document.createElement('span'); s.className = 'sub'; s.textContent = r.n > TOPN ? r.n + '개 중 ' + TOPN + '개 반영' : r.n + '개 게임'; b.append(s); }
       const c = document.createElement('span'); c.className = 'fl'; c.textContent = mode === 'all' ? r.v.toLocaleString() + '점' : r.v + g.unit;
       li.append(a, b, starEl(r.id), c); return li;
     }
@@ -671,7 +688,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       if (!ready) return;
       const list = rowsFor();
       const meRow = list.find(r => r.id === myId);
-      if (mode === 'all') say(inp.value.trim() ? '내 종합 ' + totalOf(mine).t + '점 / ' + MAX.toLocaleString() : '닉네임을 저장하면 기록이 올라가요');
+      if (mode === 'all') say(inp.value.trim() ? '내 종합 ' + (meRow ? meRow.v : 0) + '점 / ' + MAX.toLocaleString() : '닉네임을 저장하면 기록이 올라가요');
       else say(inp.value.trim() ? '이번 주 내 최고 ' + (mine[g.field] ? mine[g.field] + g.unit : '없음') : '닉네임을 저장하면 기록이 올라가요');
       if (!list.length) { empty('이번 주 기록이 아직 없어요. 첫 기록의 주인공이 되어 보세요.'); return; }
       const els = list.slice(0, 20).map(r => rowEl(r, g));
