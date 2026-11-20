@@ -265,8 +265,25 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
 #rankList li.hall .nm { font-family: "Black Han Sans", sans-serif; font-size: 17px; color: #e0a800; }
 #rankList li.hall .sub { display: block; margin-left: 0; font-family: var(--body); font-size: 11px; }
 .reset-info { margin: 0; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.rank-tabs { grid-template-columns: 1fr 1fr 1fr !important; }
+.rank-tabs { grid-template-columns: 1fr 1fr !important; }
 .rank-tabs button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#hallList, #starList { list-style: none; margin: 0; padding: 0; font-variant-numeric: tabular-nums; }
+#hallList li, #starList li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 10px 4px; border-bottom: 1px solid rgba(255,255,255,.07); }
+#hallList li.empty, #starList li.empty { display: block; color: var(--muted); font-size: 13px; border: 0; }
+#hallList .trophy { font-size: 24px; text-align: center; }
+#hallList .nm { font-family: "Black Han Sans", sans-serif; font-size: 19px; color: #ffd84a; text-shadow: 2px 2px 0 #000; min-width: 0; }
+#hallList .sub { display: block; font-family: var(--body); font-size: 11px; color: var(--muted); text-shadow: none; }
+#hallList li:first-child { background: linear-gradient(90deg, rgba(255,210,40,.22), transparent 80%); box-shadow: inset 4px 0 0 #e0a800; }
+#hallList .fl, #starList .fl { font-family: var(--stencil); font-size: 16px; }
+#starList .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#hallList li.me, #starList li.me { box-shadow: inset 4px 0 0 #46aaff; background: linear-gradient(90deg, rgba(70,170,255,.22), transparent 80%); }
+#hallList .stars, #starList .stars { display: inline-flex; align-items: center; gap: 1px; color: #ffc400; white-space: nowrap; line-height: 1; }
+#hallList .stars i, #starList .stars i { font-style: normal; font-size: 12px; }
+#hallList .stars i.big, #starList .stars i.big { font-size: 20px; margin-right: 2px; text-shadow: 0 0 8px rgba(255,196,0,.8); }
+.hall-h { font-family: "Black Han Sans", sans-serif; font-weight: 400; font-size: 18px; color: var(--accent); margin: 10px 0 0; padding-top: 12px; position: relative; text-shadow: 2px 2px 0 #000; }
+.hall-h::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: var(--hazard); }
+.tile-hall { background: linear-gradient(180deg, #4a3b10, #241c06) !important; border-color: #e0a800 !important; color: #ffd84a !important; }
+.tile-hall[aria-current="true"] { background: linear-gradient(90deg, transparent 0 9px, var(--accent) 9px), var(--hazard) !important; color: var(--black) !important; }
 </style>
 
 </head>
@@ -332,7 +349,10 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
         <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="10" y="2" width="14" height="26" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="20" r="4" fill="currentColor"/><path d="M17 28v5" stroke="currentColor" stroke-width="2"/></svg>
         <b>신호수 반응</b><small>초록불 순간 누르기</small>
       </button>
-
+      <button class="tile tile-hall" data-game="hall" type="button">
+        <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M10 4h14v8a7 7 0 0 1-14 0z" fill="currentColor"/><path d="M10 7H5a5 5 0 0 0 5 6M24 7h5a5 5 0 0 1-5 6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M17 19v6M11 30h12M13 26h8" stroke="currentColor" stroke-width="2.5"/></svg>
+        <b>명예의 전당</b><small>주간 1위 박제 · 별 순위</small>
+      </button>
     </div>
   </nav>
 
@@ -458,11 +478,18 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       <p class="hint">빨간불일 때 기다렸다가 초록불이 켜지는 순간 누르세요. 5회 평균 반응속도가 기록이고, 짧을수록 순위가 높아요. 미리 누르면 부정 출발로 그 회차를 다시 해요. <kbd>Space</kbd> · 클릭 · 탭</p>
     </section>
 
+    <section class="game hall-page" id="g-hall" hidden>
+      <div class="game-head"><h1>🏆 명예의 전당</h1></div>
+      <p class="hint">매주 <b>월요일 00시</b>에 그 주 <b>주간 종합 1위</b>가 이곳에 박제돼요. 주간 종합 TOP 5에 들 때마다 별 ★을 하나씩 받고, 별 5개가 모이면 큰 별 하나로 바뀌어요.</p>
+      <h2 class="hall-h">역대 주간 1위</h2>
+      <ol id="hallList"><li class="empty">불러오는 중이에요.</li></ol>
+      <h2 class="hall-h">별 순위 · 역대 TOP 5 횟수</h2>
+      <ol id="starList"><li class="empty">불러오는 중이에요.</li></ol>
+    </section>
     <section class="rank" aria-labelledby="rankTitle">
       <div class="rank-tabs" role="group" aria-label="랭킹 종류">
         <button type="button" id="tabGame" aria-pressed="true">이 게임 랭킹</button>
         <button type="button" id="tabAll" aria-pressed="false">주간 종합</button>
-        <button type="button" id="tabHall" aria-pressed="false">명예의 전당</button>
       </div>
       <p class="reset-info" id="resetInfo">이번 주 랭킹 · 매주 월요일 00시 초기화</p>
       <div class="rank-head"><h2 id="rankTitle">랭킹 TOP 20</h2><span id="rankState">불러오는 중…</span></div>
@@ -533,13 +560,11 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     $('refList').textContent = Object.values(GAMES).map(g => g.name + ' ' + g.ref + g.unit + (g.asc ? '(이하)' : '')).join(' · ');
     function setMode(m) {
       mode = m;
-      $('tabGame').setAttribute('aria-pressed', m === 'game'); $('tabAll').setAttribute('aria-pressed', m === 'all'); $('tabHall').setAttribute('aria-pressed', m === 'hall');
-      $('rankNote').hidden = m !== 'all'; form.hidden = m === 'hall'; render();
-      if (m === 'hall') loadHall();
+      $('tabGame').setAttribute('aria-pressed', m === 'game'); $('tabAll').setAttribute('aria-pressed', m === 'all');
+      $('rankNote').hidden = m !== 'all'; render();
     }
     $('tabGame').addEventListener('click', () => setMode('game'));
     $('tabAll').addEventListener('click', () => setMode('all'));
-    $('tabHall').addEventListener('click', () => setMode('hall'));
 
     // ── 지난 주 결과 (지난 주 기록은 규칙상 수정 불가 → 브라우저에 영구 캐시) ──
     const weekCache = {};
@@ -555,18 +580,19 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     }
     let prevTop = {};   // 전주 종합 1~5등: { uid: 등수 }
     let stars = {};     // 지금까지 주간 종합 TOP5에 든 횟수: { uid: 횟수 }
+    let starNick = {};  // 별 순위에 보여 줄 가장 최근 닉네임
     let hall = null;
     async function loadHistory() {
       if (!db) return;
-      const pt = {}, st = {}, h = [];
+      const pt = {}, st = {}, sn = {}, h = [];
       for (let wk = wkNow - 1; wk >= WK0; wk--) {
         try {
           const r = await weekResult(wk);
           h.push({ wk, champ: r.top[0], n: r.n });
-          r.top.forEach((p, i) => { st[p.id] = (st[p.id] || 0) + 1; if (wk === wkNow - 1) pt[p.id] = i + 1; });
+          r.top.forEach((p, i) => { st[p.id] = (st[p.id] || 0) + 1; if (!sn[p.id]) sn[p.id] = p.nick; if (wk === wkNow - 1) pt[p.id] = i + 1; });
         } catch (e) {}
       }
-      prevTop = pt; stars = st; hall = h; render();
+      prevTop = pt; stars = st; starNick = sn; hall = h; render(); renderHall();
     }
     const loadPrev = loadHistory, loadHall = () => { if (!hall) loadHistory(); };
 
@@ -612,11 +638,15 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       return sp;
     }
     function renderHall() {
-      $('rankTitle').textContent = '명예의 전당';
-      say('주간 종합 1위 박제');
-      if (!hall) { empty('불러오는 중이에요.'); return; }
-      if (!hall.length) { empty('첫 주가 진행 중이에요. ' + weekLabel(wkNow).split(' ~ ')[1] + ' 일요일이 지나 월요일 00시가 되면 첫 1위가 박제돼요.'); return; }
-      elList.replaceChildren(...hall.map(h => {
+      const hl = $('hallList'), sl = $('starList');
+      const msg = (el, t) => { const li = document.createElement('li'); li.className = 'empty'; li.textContent = t; el.replaceChildren(li); };
+      if (!db) { msg(hl, '불러오는 중이에요.'); msg(sl, '불러오는 중이에요.'); return; }
+      if (!hall) { msg(hl, '불러오는 중이에요.'); msg(sl, '불러오는 중이에요.'); return; }
+      if (!hall.length) {
+        msg(hl, '첫 주(' + weekLabel(wkNow) + ')가 진행 중이에요. 다음 월요일 00시에 첫 1위가 박제돼요.');
+        msg(sl, '첫 주가 끝나면 TOP 5에게 첫 별이 생겨요.'); return;
+      }
+      hl.replaceChildren(...hall.map(h => {
         const li = document.createElement('li'); li.className = 'hall' + (h.champ && h.champ.id === myId ? ' me' : '');
         const a = document.createElement('span'); a.className = 'trophy'; a.textContent = '🏆'; a.setAttribute('aria-hidden', 'true');
         const b = document.createElement('span'); b.className = 'nm';
@@ -625,11 +655,20 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
         const c = document.createElement('span'); c.className = 'fl'; c.textContent = h.champ ? h.champ.t.toLocaleString() + '점' : '-';
         li.append(a, b, starEl(h.champ ? h.champ.id : ''), c); return li;
       }));
-    }
-    function render() {
+      const board = Object.keys(stars).map(id => ({ id, nick: starNick[id] || '익명', n: stars[id] })).sort((a, b) => b.n - a.n).slice(0, 20);
+      if (!board.length) { msg(sl, '아직 별을 받은 사람이 없어요.'); return; }
+      let rk = 0;
+      sl.replaceChildren(...board.map((r, k) => {
+        if (k === 0 || r.n !== board[k - 1].n) rk = k + 1;
+        const li = document.createElement('li'); if (r.id === myId) li.className = 'me';
+        const a = document.createElement('span'); a.className = 'medal ' + (rk <= 3 ? 'm' + rk : 'm-top'); a.textContent = rk;
+        const b = document.createElement('span'); b.className = 'nm'; b.textContent = r.nick + (r.id === myId ? ' (나)' : '');
+        const c = document.createElement('span'); c.className = 'fl'; c.textContent = r.n + '회';
+        li.append(a, b, starEl(r.id), c); return li;
+      }));
+    }    function render() {
       const g = GAMES[current]; if (!g) return;
       $('tabGame').textContent = g.name;
-      if (mode === 'hall') return renderHall();
       $('rankTitle').textContent = mode === 'all' ? '주간 종합 TOP 20' : g.name + ' 주간 TOP 20';
       if (!ready) return;
       const list = rowsFor();
@@ -650,7 +689,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     function watch() {
       if (!db || unsub) { render(); return; }
       const timer = setTimeout(() => say('랭킹 서버 응답이 없어요.'), 10000);
-      ready = false; if (mode !== 'hall') empty('랭킹을 불러오는 중이에요.');
+      ready = false; empty('랭킹을 불러오는 중이에요.');
       unsub = db.collection(weekPath(wkNow)).limit(2000).onSnapshot(q => {
         clearTimeout(timer); ready = true;
         docs = q.docs.map(x => { const d = x.data() || {}; return { id: x.id, nick: String(d.nick || '익명'), data: d }; });
@@ -668,7 +707,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       $('resetInfo').textContent = '이번 주 ' + weekLabel(w) + ' · 초기화까지 ' + (dd ? dd + '일 ' : '') + hh + '시간 ' + mm + '분';
       if (w !== wkNow && db) {
         wkNow = w; if (unsub) { unsub(); unsub = null; }
-        hall = null; docs = []; loadMine().then(() => { watch(); loadPrev(); if (mode === 'hall') loadHall(); });
+        hall = null; docs = []; loadMine().then(() => { watch(); loadPrev(); if (current === 'hall') loadHall(); });
       }
     }
     tickWeek(); setInterval(tickWeek, 30000);
@@ -726,6 +765,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       watch(); loadPrev();
     })();
     return {
+      showHall() { renderHall(); if (!hall) loadHall(); },
       switchTo() { render(); watch(); },
       submit(game, v) { const f = GAMES[game].field; if (better(game, v, mine[f])) write({ [f]: v }); },
     };
@@ -1769,9 +1809,9 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
   })();
 
   // ───────── 게임 전환 ─────────
-  const mods = { slab, crack, memory, pour, catch: catcher, level, torque, demo, truck, drone, snake, climb, cross, react };
+  const mods = { slab, crack, memory, pour, catch: catcher, level, torque, demo, truck, drone, snake, climb, cross, react, hall: { enter() { rank.showHall(); } } };
   function go(name) {
-    if (!GAMES[name]) name = 'slab';
+    if (!mods[name]) name = 'slab';
     if (current === name) return;
     if (current && mods[current].leave) mods[current].leave();
     current = name;
@@ -1779,6 +1819,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     document.querySelectorAll('.game').forEach(s => { s.hidden = s.id !== 'g-' + name; });
     document.querySelectorAll('.tile').forEach(t => t.setAttribute('aria-current', t.dataset.game === name ? 'true' : 'false'));
     if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+    document.querySelector('.rank').hidden = name === 'hall';
     rank.switchTo();
   }
   document.querySelectorAll('.tile').forEach(t => t.addEventListener('click', () => go(t.dataset.game)));
