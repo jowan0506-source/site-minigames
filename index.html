@@ -345,7 +345,10 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
         <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="10" y="2" width="14" height="26" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="20" r="4" fill="currentColor"/><path d="M17 28v5" stroke="currentColor" stroke-width="2"/></svg>
         <b>신호수 반응</b><small>초록불 순간 누르기</small>
       </button>
-      <button class="tile tile-hall" data-game="hall" type="button">
+      <button class="tile" data-game="split" type="button">
+        <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="13" y="2" width="8" height="8" fill="currentColor"/><rect x="13" y="12" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 24l-6 4M23 24l6 4" stroke="currentColor" stroke-width="2.5"/><rect x="1" y="27" width="10" height="6" fill="currentColor"/><rect x="23" y="27" width="10" height="6" fill="currentColor"/></svg>
+        <b>현장 정리</b><small>보호구는 왼쪽, 자재는 오른쪽</small>
+      </button>      <button class="tile tile-hall" data-game="hall" type="button">
         <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M10 4h14v8a7 7 0 0 1-14 0z" fill="currentColor"/><path d="M10 7H5a5 5 0 0 0 5 6M24 7h5a5 5 0 0 1-5 6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M17 19v6M11 30h12M13 26h8" stroke="currentColor" stroke-width="2.5"/></svg>
         <b>명예의 전당</b><small>주간 1위 박제 · 별 순위</small>
       </button>
@@ -466,6 +469,13 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
       <p class="hint">빨간불일 때 기다렸다가 초록불이 켜지는 순간 누르세요. 5회 평균 반응속도가 기록이고, 짧을수록 순위가 높아요. 미리 누르면 부정 출발로 그 회차를 다시 해요. <kbd>Space</kbd> · 클릭 · 탭</p>
     </section>
 
+    <!-- 현장 정리 -->
+    <section class="game" id="g-split" hidden>
+      <div class="game-head"><h1>현장 정리</h1>
+        <div class="stats"><div class="stat"><small>정리</small><b id="spScore">0</b></div><div class="stat"><small>최고</small><b id="spBest">-</b></div></div></div>
+      <div class="stage"><canvas id="cvSplit" tabindex="0" aria-label="현장 정리 화면. 맨 아래 물건을 왼쪽 또는 오른쪽으로 보냅니다"></canvas></div>
+      <p class="hint">슈트 맨 아래(노란 원) 물건을 분류하세요. <b>보호구는 왼쪽</b>, <b>자재는 오른쪽</b>. 처음엔 안전모·벽돌 두 가지, <b>30개부터 안전조끼·볼트가 추가</b>돼요. 시간 막대가 계속 줄고 맞히면 다시 차요. 3번 틀리거나 시간이 바닥나면 끝! 화면 왼쪽·오른쪽 탭 또는 <kbd>←</kbd> <kbd>→</kbd></p>
+    </section>
     <section class="game hall-page" id="g-hall" hidden>
       <div class="game-head"><h1>🏆 명예의 전당</h1></div>
       <p class="hint">매주 <b>월요일 00시</b>에 그 주 <b>주간 종합 1위</b>가 이곳에 박제돼요. 주간 종합 TOP 5에 들 때마다 별 ★을 하나씩 받고, 별 5개가 모이면 큰 별 하나로 바뀌어요.</p>
@@ -516,6 +526,7 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     climb: { name: '비계 오르기', field: 'climb', unit: 'm', ref: 1200 },
     cross: { name: '현장 횡단',   field: 'cross', unit: '번', ref: 15 },
     react: { name: '신호수 반응', field: 'react', unit: 'ms', asc: true, ref: 220 },
+    split: { name: '현장 정리',   field: 'split', unit: '개', ref: 150 },
   };
   let current = null;
 
@@ -1739,8 +1750,113 @@ h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--black); letter-spacing: .02em
     };
   })();
 
+  // ───────── 현장 정리 (왼쪽 보호구함 / 오른쪽 자재 적치장) ─────────
+  const split = (() => {
+    const { cv, ctx } = mkCanvas('cvSplit'), elS = $('spScore'), elB = $('spBest');
+    elB.textContent = bestText('split');
+    const LEFT = [['⛑️', '안전모'], ['🦺', '안전조끼']];
+    const RIGHT = [['🧱', '벽돌'], ['🔩', '볼트']];
+    const MORE = 30;   // 이 점수부터 종류 추가 (2종 → 4종)
+    const BOT = 292, GAP = 40, SHOW = 6, EMO = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
+    let st;
+    const kinds = () => st.score < MORE ? 1 : 2;   // 처음엔 안전모·벽돌 2종, 30개부터 안전조끼·볼트까지 4종
+    function item() {
+      const left = Math.random() < .5, pool = (left ? LEFT : RIGHT).slice(0, kinds());
+      const p = pool[Math.floor(Math.random() * pool.length)]; return { ic: p[0], nm: p[1], left };
+    }
+    function reset() {
+      st = { stack: [], score: 0, combo: 0, lives: 3, time: 1, run: false, over: false, fly: [], shake: 0, msg: '', msgT: 0, drop: 0 };
+      for (let i = 0; i < SHOW + 1; i++) st.stack.push(item());
+      elS.textContent = '0';
+    }
+    function end() { st.run = false; st.over = true; saveBest('split', st.score, elB); }
+    function send(left) {
+      if (st.over) { reset(); return; }
+      if (!st.run) st.run = true;
+      const it = st.stack.shift(); st.stack.push(item()); st.drop = GAP;
+      const ok = it.left === left;
+      st.fly.push({ ic: it.ic, x: CW / 2, y: BOT, tx: left ? 52 : CW - 52, t: 0, ok });
+      if (ok) {
+        st.score++; st.combo++; elS.textContent = st.score;
+        st.time = Math.min(1, st.time + 0.055 + Math.min(0.045, st.combo * 0.0025));
+        if (st.score === MORE) { st.msg = '새 자재 등장! 조끼◀ ▶볼트'; st.msgT = 90; }
+        else if (st.combo % 10 === 0) { st.msg = st.combo + ' 콤보!'; st.msgT = 50; }
+      } else {
+        st.lives--; st.combo = 0; st.shake = 14; st.msg = it.nm + '은(는) ' + (it.left ? '왼쪽' : '오른쪽') + '!'; st.msgT = 55;
+        if (st.lives <= 0) end();
+      }
+    }
+    function bin(x, label, icons, hot) {
+      ctx.fillStyle = hot ? col.acc : col.panel || col.slab; ctx.globalAlpha = hot ? .35 : 1;
+      ctx.fillRect(x - 44, 318, 88, 66); ctx.globalAlpha = 1;
+      ctx.strokeStyle = col.ink; ctx.lineWidth = 2; ctx.strokeRect(x - 44, 318, 88, 66); ctx.lineWidth = 1;
+      ctx.fillStyle = col.acc; for (let i = 0; i < 88; i += 12) ctx.fillRect(x - 44 + i, 318, 6, 5);
+      ctx.textAlign = 'center'; ctx.fillStyle = col.ink; ctx.font = '600 12px "IBM Plex Sans KR", sans-serif'; ctx.fillText(label, x, 342);
+      ctx.font = '16px ' + EMO; ctx.fillText(icons, x, 368);
+    }
+    function frame() {
+      requestAnimationFrame(frame);
+      if (current !== 'split') return;
+      if (st.run) {
+        st.time -= 0.0022 + Math.min(0.0065, st.score * 0.00005);
+        if (st.time <= 0) { st.time = 0; end(); }
+      }
+      if (st.drop > 0) st.drop = Math.max(0, st.drop - 8);
+      if (st.shake) st.shake--; if (st.msgT) st.msgT--;
+      st.fly.forEach(f => { f.t += 0.09; });
+      st.fly = st.fly.filter(f => f.t < 1);
+      paper(ctx);
+      ctx.save(); if (st.shake) ctx.translate((Math.random() - .5) * 8, 0);
+      // 시간 막대
+      ctx.fillStyle = col.grid; ctx.fillRect(10, 30, CW - 20, 10);
+      ctx.fillStyle = st.time < .3 ? col.bad : col.acc; ctx.fillRect(10, 30, (CW - 20) * st.time, 10);
+      ctx.strokeStyle = col.ink; ctx.strokeRect(10.5, 30.5, CW - 21, 9);
+      ctx.textAlign = 'left'; ctx.fillStyle = col.ink; ctx.font = '600 12px "IBM Plex Sans KR", sans-serif';
+      ctx.fillText('기회 ' + '●'.repeat(Math.max(0, st.lives)) + '○'.repeat(3 - Math.max(0, st.lives)), 10, 20);
+      ctx.textAlign = 'right'; ctx.fillText(st.combo >= 3 ? st.combo + ' 콤보' : '', CW - 10, 20);
+      // 가운데 활송 슈트
+      ctx.fillStyle = col.grid; ctx.fillRect(CW / 2 - 30, 52, 60, BOT - 30);
+      ctx.strokeStyle = col.muted; ctx.beginPath(); ctx.moveTo(CW / 2 - 30, 52); ctx.lineTo(CW / 2 - 30, BOT + 24); ctx.moveTo(CW / 2 + 30, 52); ctx.lineTo(CW / 2 + 30, BOT + 24); ctx.stroke();
+      // 쌓인 물건 (맨 아래가 지금 분류할 것)
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (let i = SHOW - 1; i >= 0; i--) {
+        const it = st.stack[i], y = BOT - i * GAP - st.drop;
+        if (y < 56) continue;
+        if (i === 0) { ctx.fillStyle = col.acc; ctx.globalAlpha = .25; ctx.beginPath(); ctx.arc(CW / 2, y, 26, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+          ctx.strokeStyle = col.acc; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(CW / 2, y, 26, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 1; }
+        ctx.globalAlpha = i === 0 ? 1 : Math.max(.35, 1 - i * .12);
+        ctx.font = (i === 0 ? 34 : 28) + 'px ' + EMO; ctx.fillText(it.ic, CW / 2, y + 1);
+        ctx.globalAlpha = 1;
+      }
+      // 날아가는 물건
+      st.fly.forEach(f => {
+        const x = f.x + (f.tx - f.x) * f.t, y = f.y + (345 - f.y) * f.t - Math.sin(f.t * Math.PI) * 40;
+        ctx.globalAlpha = 1 - f.t * .6; ctx.font = '28px ' + EMO; ctx.fillText(f.ic, x, y);
+        if (!f.ok) { ctx.fillStyle = col.bad; ctx.font = '700 26px sans-serif'; ctx.fillText('✕', x, y); }
+        ctx.globalAlpha = 1;
+      });
+      ctx.textBaseline = 'alphabetic';
+      const hot = st.fly.length ? st.fly[st.fly.length - 1] : null;
+      bin(52, '◀ 보호구함', LEFT.slice(0, st.run || st.over ? kinds() : 1).map(p => p[0]).join(''), hot && hot.ok && hot.tx < CW / 2 && hot.t < .9);
+      bin(CW - 52, '자재 적치장 ▶', RIGHT.slice(0, st.run || st.over ? kinds() : 1).map(p => p[0]).join(''), hot && hot.ok && hot.tx > CW / 2 && hot.t < .9);
+      ctx.restore();
+      if (st.msgT) say2(ctx, st.msg, 76, '20px "Black Han Sans", sans-serif', (st.msg.includes('콤보') || st.msg.includes('새 자재')) ? col.acc : col.bad);
+      if (!st.run && !st.over) { panel(ctx, '현장 정리', '보호구는 ◀ 왼쪽, 자재는 오른쪽 ▶', '화면 왼쪽·오른쪽을 눌러 시작'); }
+      if (st.over) panel(ctx, st.lives <= 0 ? '실수 3번!' : '시간 초과!', st.score + '개 정리', '최고 ' + bestText('split', '개') + ' · 다시 하려면 누르세요', col.bad);
+    }
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.focus(); send(pxOf(cv, e) < CW / 2); });
+    reset(); requestAnimationFrame(frame);
+    return {
+      key(e) {
+        if (e.code === 'ArrowLeft') { e.preventDefault(); if (!e.repeat) send(true); }
+        else if (e.code === 'ArrowRight') { e.preventDefault(); if (!e.repeat) send(false); }
+      },
+      leave() { if (st.run) reset(); },
+    };
+  })();
+
   // ───────── 게임 전환 ─────────
-  const mods = { slab, crack, memory, pour, catch: catcher, torque, demo, truck, drone, snake, climb, cross, react, hall: { enter() { rank.showHall(); } } };
+  const mods = { slab, crack, memory, pour, catch: catcher, torque, demo, truck, drone, snake, climb, cross, react, split, hall: { enter() { rank.showHall(); } } };
   function go(name) {
     if (!mods[name]) name = 'slab';
     if (current === name) return;
